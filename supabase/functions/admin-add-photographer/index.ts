@@ -36,7 +36,7 @@ Deno.serve(async (req: Request) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { display_name: displayName },
+      user_metadata: { display_name: displayName, must_change_password: true },
     })
     if (createError) throw createError
     if (!created.user) throw new Error("Photographer account could not be created")
