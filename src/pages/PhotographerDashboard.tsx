@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react"
 import { useAuth } from "../lib/auth"
-import { supabase } from "../lib/supabase"
+import { supabase, supabasePublishableKey, supabaseUrl } from "../lib/supabase"
 
 type Order = { id: string; user_id: string; address: string; customer_name: string; service: string; notes: string; status: string; created_at: string }
 type JobFiles = Record<string, { source: { name: string; url: string }[]; output: string[] }>
@@ -61,18 +61,41 @@ export default function PhotographerDashboard() {
 
   async function downloadSources(job: Order) {
     setBusy(job.id); setMessage("")
-    const { data, error } = await supabase.functions.invoke("create-source-zip", { body: { order_id: job.id } })
-    setBusy(null)
-    if (error) {
-      setMessage(error.message || "Could not prepare source ZIP")
-      return
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData.session?.access_token
+      if (!accessToken) throw new Error("Your session has expired. Please sign in again.")
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-source-zip`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "apikey": supabasePublishableKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ order_id: job.id }),
+      })
+
+      if (!response.ok) {
+        const detail = await response.text()
+        throw new Error(detail || "Could not prepare source ZIP")
+      }
+
+      const bytes = await response.arrayBuffer()
+      const blob = new Blob([bytes], { type: "application/zip" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `${job.address.replace(/[^a-zA-Z0-9 _-]/g, "").trim().replace(/\s+/g, "-") || "property"}-source-photos.zip`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Could not prepare source ZIP")
+    } finally {
+      setBusy(null)
     }
-    if (data instanceof Blob) {
-      const url = URL.createObjectURL(data)
-      window.open(url, "_self")
-      return
-    }
-    setMessage("Could not prepare source ZIP")
   }
 
   async function uploadEdited(job: Order, selected: FileList | null) {
