@@ -59,6 +59,17 @@ export default function PhotographerDashboard() {
     setMessage("Password changed successfully.")
   }
 
+  async function downloadSources(job: Order) {
+    setBusy(job.id); setMessage("")
+    const { data, error } = await supabase.functions.invoke("create-source-zip", { body: { order_id: job.id } })
+    setBusy(null)
+    if (error || data?.error || !data?.download_url) {
+      setMessage(data?.error || error?.message || "Could not prepare source ZIP")
+      return
+    }
+    window.location.assign(data.download_url)
+  }
+
   async function uploadEdited(job: Order, selected: FileList | null) {
     if (!selected?.length) return
     setBusy(job.id); setMessage("")
@@ -100,7 +111,11 @@ export default function PhotographerDashboard() {
         <div className="flex flex-wrap justify-between gap-3"><div><small>{new Date(job.created_at).toLocaleDateString("en-GB")}</small><h2 className="text-2xl mt-1">{job.address}</h2><p className="text-sm text-black/60">{job.customer_name} · {job.service} · {job.status}</p></div><span className="border px-3 py-2 h-fit text-sm">{files[job.id]?.output.length ?? 0} edited uploaded</span></div>
         {job.notes && <div className="bg-white/60 p-4 mt-5"><strong className="text-sm">Client instructions</strong><p className="text-sm mt-1 whitespace-pre-wrap">{job.notes}</p></div>}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-5">{(files[job.id]?.source ?? []).map(photo=><a key={photo.name} href={photo.url} target="_blank" rel="noreferrer" className="border bg-white block"><img src={photo.url} alt="Client source" className="w-full aspect-[4/3] object-cover"/><span className="block p-2 text-xs truncate">{photo.name}</span></a>)}</div>
-        <div className="flex flex-wrap gap-3 items-center mt-6"><label className="px-4 py-3 border cursor-pointer text-sm">Upload edited photos<input className="hidden" type="file" multiple accept="image/*" disabled={busy===job.id || job.status==="ready"} onChange={e=>void uploadEdited(job,e.target.files)} /></label><button disabled={busy===job.id || !(files[job.id]?.output.length)} onClick={()=>void sendToClient(job)} className="px-5 py-3 text-white disabled:opacity-40" style={{background:"var(--primary)"}}>{busy===job.id ? "Working…" : job.status==="ready" ? "Resend ZIP to client" : "Send edited ZIP to client"}</button></div>
+        <div className="flex flex-wrap gap-3 items-center mt-6">
+          <button type="button" disabled={busy===job.id || !(files[job.id]?.source.length)} onClick={()=>void downloadSources(job)} className="px-4 py-3 border text-sm disabled:opacity-40">{busy===job.id ? "Preparing ZIP…" : "Download originals ZIP"}</button>
+          <label className="px-4 py-3 border cursor-pointer text-sm">Upload edited photos<input className="hidden" type="file" multiple accept="image/*" disabled={busy===job.id || job.status==="ready"} onChange={e=>void uploadEdited(job,e.target.files)} /></label>
+          <button type="button" disabled={busy===job.id || !(files[job.id]?.output.length)} onClick={()=>void sendToClient(job)} className="px-5 py-3 text-white disabled:opacity-40" style={{background:"var(--primary)"}}>{busy===job.id ? "Working…" : job.status==="ready" ? "Resend edited ZIP" : "Send edited ZIP to client"}</button>
+        </div>
       </article>)}</div>
       {!orders.length && <div className="border p-8 text-center">No assigned jobs yet.</div>}
     </section>
