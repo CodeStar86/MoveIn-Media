@@ -14,6 +14,7 @@ export default function PhotographerDashboard() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordBusy, setPasswordBusy] = useState(false)
+  const [showPasswordSetup, setShowPasswordSetup] = useState(user?.user_metadata?.must_change_password === true)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -47,10 +48,14 @@ export default function PhotographerDashboard() {
     if (newPassword.length < 8) { setMessage("Password must be at least 8 characters."); return }
     if (newPassword !== confirmPassword) { setMessage("Passwords do not match."); return }
     setPasswordBusy(true)
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+      data: { must_change_password: false },
+    })
     setPasswordBusy(false)
     if (error) { setMessage(error.message); return }
     setNewPassword(""); setConfirmPassword("")
+    setShowPasswordSetup(false)
     setMessage("Password changed successfully.")
   }
 
@@ -82,15 +87,15 @@ export default function PhotographerDashboard() {
     <section style={{ background: "var(--primary)" }} className="py-14"><div className="max-w-6xl mx-auto px-6"><p className="text-xs tracking-widest uppercase" style={{ color: "var(--accent)" }}>PHOTOGRAPHER</p><h1 className="text-4xl text-white mt-2">Assigned jobs</h1><p className="text-white/60 mt-2">Download source photos, upload edits, then send one ZIP back to the client.</p></div></section>
     <section className="max-w-6xl mx-auto px-6 py-10">
       {message && <div className="border p-4 mb-6" role="status">{message}</div>}
-      <form onSubmit={changePassword} className="border p-6 mb-8">
+      {showPasswordSetup && <form onSubmit={changePassword} className="border p-6 mb-8">
         <h2 className="text-2xl mb-2">Account security</h2>
-        <p className="text-sm text-black/60 mb-4">Change the password your administrator gave you.</p>
+        <p className="text-sm text-black/60 mb-4">Change the temporary password your administrator gave you.</p>
         <div className="grid md:grid-cols-[1fr_1fr_auto] gap-4 items-end">
           <label className="block">New password<input required type="password" minLength={8} autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="block w-full border p-3 mt-1" /></label>
           <label className="block">Confirm password<input required type="password" minLength={8} autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className="block w-full border p-3 mt-1" /></label>
           <button disabled={passwordBusy} className="px-5 py-3 text-white" style={{ background: "var(--primary)" }}>{passwordBusy ? "Saving…" : "Change password"}</button>
         </div>
-      </form>
+      </form>}
       <div className="space-y-6">{orders.map(job=><article key={job.id} className="border p-6">
         <div className="flex flex-wrap justify-between gap-3"><div><small>{new Date(job.created_at).toLocaleDateString("en-GB")}</small><h2 className="text-2xl mt-1">{job.address}</h2><p className="text-sm text-black/60">{job.customer_name} · {job.service} · {job.status}</p></div><span className="border px-3 py-2 h-fit text-sm">{files[job.id]?.output.length ?? 0} edited uploaded</span></div>
         {job.notes && <div className="bg-white/60 p-4 mt-5"><strong className="text-sm">Client instructions</strong><p className="text-sm mt-1 whitespace-pre-wrap">{job.notes}</p></div>}
