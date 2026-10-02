@@ -63,11 +63,16 @@ export default function PhotographerDashboard() {
     setBusy(job.id); setMessage("")
     const { data, error } = await supabase.functions.invoke("create-source-zip", { body: { order_id: job.id } })
     setBusy(null)
-    if (error || data?.error || !data?.download_url) {
-      setMessage(data?.error || error?.message || "Could not prepare source ZIP")
+    if (error) {
+      setMessage(error.message || "Could not prepare source ZIP")
       return
     }
-    window.location.assign(data.download_url)
+    if (data instanceof Blob) {
+      const url = URL.createObjectURL(data)
+      window.open(url, "_self")
+      return
+    }
+    setMessage("Could not prepare source ZIP")
   }
 
   async function uploadEdited(job: Order, selected: FileList | null) {
