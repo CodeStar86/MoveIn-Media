@@ -12,6 +12,7 @@ const BeforeAfterPage = lazy(() => import("./pages/BeforeAfterPage"))
 const Pricing = lazy(() => import("./pages/Pricing"))
 const UploadPhotos = lazy(() => import("./pages/UploadPhotos"))
 const Portal = lazy(() => import("./pages/Portal"))
+const DownloadStatus = lazy(() => import("./pages/DownloadStatus"))
 const Login = lazy(() => import("./pages/Login"))
 const NotFound = lazy(() => import("./pages/NotFound"))
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"))
@@ -48,6 +49,7 @@ export default function App() {
                 <Route path="/upload" element={<Protected><UploadPhotos /></Protected>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/portal" element={<Protected><Portal /></Protected>} />
+                <Route path="/portal/download/:orderId" element={<Protected><DownloadStatus /></Protected>} />
                 <Route path="/admin" element={<RoleProtected role="admin"><AdminDashboard /></RoleProtected>} />
                 <Route path="/photographer" element={<RoleProtected role="photographer"><PhotographerDashboard /></RoleProtected>} />
                 <Route path="/book" element={<Navigate to="/upload" replace />} />
