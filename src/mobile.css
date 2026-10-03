@@ -1,9 +1,27 @@
-/* Mobile-first refinements for the public site. Loaded after index.css. */
+/* Responsive navigation and mobile refinements. Loaded after index.css. */
+
+/* Desktop/tablet header defaults */
+.site-header .mobile-menu-button,
+.site-header .mobile-nav-panel {
+  display: none;
+}
+
+.site-header > div:first-child {
+  width: min(1500px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.site-header .desktop-nav {
+  min-width: 0;
+}
+
+.site-header .desktop-nav-link {
+  text-decoration: none;
+}
 
 .mobile-menu-button {
   width: 44px;
   height: 44px;
-  display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, .12);
@@ -43,6 +61,76 @@
   box-shadow: 0 18px 35px rgba(0, 0, 0, .18);
 }
 
+/* Keep the full desktop nav only when there is enough room for it. */
+@media (min-width: 1024px) {
+  .site-header > div:first-child {
+    min-height: 76px;
+    gap: 28px;
+  }
+
+  .site-header .desktop-nav {
+    display: flex !important;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(18px, 1.55vw, 30px) !important;
+  }
+
+  .site-header .desktop-nav-link {
+    display: block;
+    font-size: 10px !important;
+    line-height: 1.2;
+    letter-spacing: .10em !important;
+    white-space: nowrap;
+  }
+
+  .site-header .desktop-actions {
+    display: flex !important;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .site-header .mobile-menu-button,
+  .site-header .mobile-nav-panel {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  .site-header .desktop-nav {
+    gap: clamp(24px, 1.8vw, 36px) !important;
+  }
+
+  .site-header .desktop-nav-link {
+    font-size: 11px !important;
+    letter-spacing: .11em !important;
+  }
+}
+
+/* Switch to the mobile menu before the desktop links become cramped. */
+@media (max-width: 1023px) {
+  .site-header > div:first-child {
+    width: 100%;
+    min-height: 64px;
+    padding-inline: 24px;
+  }
+
+  .site-header .desktop-nav,
+  .site-header .desktop-actions {
+    display: none !important;
+  }
+
+  .site-header .mobile-menu-button {
+    display: inline-flex !important;
+    flex: 0 0 44px;
+  }
+
+  .site-header .mobile-nav-panel {
+    display: flex;
+  }
+}
+
 @media (max-width: 600px) {
   .hero-classic {
     min-height: 660px;
@@ -50,7 +138,7 @@
 
   .hero-classic-image,
   .hero-classic-shade {
-    inset-bottom: 104px;
+    bottom: 104px;
   }
 
   .hero-classic-image img {
