@@ -7,7 +7,7 @@ function destinationFor(user: AppUser | null | undefined, requested?: string) {
   const role = user?.app_metadata?.role
   if (role === "photographer") return "/photographer"
   if (role === "admin") return "/admin"
-  return requested && ["/portal", "/upload"].includes(requested) ? requested : "/portal"
+  return requested && ["/portal", "/upload", "/pricing"].includes(requested) ? requested : "/portal"
 }
 
 export default function Login() {
