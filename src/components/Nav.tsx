@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../lib/auth"
-import { supabase } from "../lib/supabase"
 
 const links = [
   { to: "/property-image-editing", label: "Services" },
@@ -13,12 +12,12 @@ const links = [
 
 export default function Nav() {
   const [open, setOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
 
-  async function signOut() {
-    await supabase.auth.signOut()
+  async function handleSignOut() {
+    await signOut()
     setOpen(false)
     navigate("/")
   }
@@ -36,7 +35,7 @@ export default function Nav() {
         </nav>
         <div className="hidden lg:flex items-center gap-3">
           <Link to={accountLink} className="text-xs tracking-widest uppercase px-4 py-2 text-white/60">{accountLabel}</Link>
-          {user && <button type="button" onClick={() => void signOut()} className="text-xs tracking-widest uppercase px-2 py-2 text-white/60">Sign out</button>}
+          {user && <button type="button" onClick={() => void handleSignOut()} className="text-xs tracking-widest uppercase px-2 py-2 text-white/60">Sign out</button>}
           {(!user || (!role || role === "client")) && <Link to="/upload" className="text-xs tracking-widest uppercase px-5 py-2 font-500" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}>Upload a Property</Link>}
         </div>
         <button type="button" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} className="lg:hidden text-white mobile-menu-button" onClick={() => setOpen(!open)}><span className="mobile-menu-icon" aria-hidden="true"><span/><span/><span/></span></button>
@@ -44,7 +43,7 @@ export default function Nav() {
       {open && <nav className="lg:hidden px-6 pb-5 flex flex-col gap-3 mobile-nav-panel" style={{ background: "var(--secondary)" }} aria-label="Mobile navigation">
         {links.map((link) => <Link onClick={() => setOpen(false)} key={link.to} to={link.to} className="py-2 text-sm uppercase text-white/80">{link.label}</Link>)}
         <Link onClick={() => setOpen(false)} to={accountLink} className="py-2 text-sm uppercase text-white/70">{accountLabel}</Link>
-        {user && <button type="button" onClick={() => void signOut()} className="py-2 text-left text-sm uppercase text-white/70">Sign out</button>}
+        {user && <button type="button" onClick={() => void handleSignOut()} className="py-2 text-left text-sm uppercase text-white/70">Sign out</button>}
         {(!user || (!role || role === "client")) && <Link onClick={() => setOpen(false)} to="/upload" className="py-3 text-center text-sm uppercase" style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}>Upload a Property</Link>}
       </nav>}
     </header>
