@@ -5,12 +5,12 @@ import { services } from "../lib/services"
 import { apiDownloadUrl, apiJson } from "../lib/api"
 
 type Order = { id:string; address:string; service:string; price_pence:number|null; status:string; description:string|null; created_at:string; delivery_zip_path:string|null; media_deleted_at:string|null }
-type Booking = { id:string; address:string; postcode:string; preferred_date:string; preferred_time:"morning"|"afternoon"|"flexible"; price_pence:number; status:string; photographer_id:string|null; created_at:string }
+type Booking = { id:string; address:string; postcode:string; preferred_date:string; preferred_time:"morning"|"afternoon"|"flexible"; price_pence:number; status:string; photographer_id:string|null; created_at:string; delivered_at:string|null; delivery_zip_path:string|null; media_deleted_at:string|null; photo_count:number }
 type SubscriptionSummary = { plan:"portfolio5"|"portfolio10"|"portfolio20"; status:string; allowance:number; used:number; remaining:number; current_period_start:string|null; current_period_end:string|null; cancel_at_period_end:boolean }
 
 const serviceName = new Map(services.map(service => [service.id, service.name]))
 const statusLabels: Record<string,string> = { draft:"Draft", awaiting_payment:"Awaiting payment", paid:"Paid", processing:"Processing", ready:"Ready", cancelled:"Cancelled" }
-const bookingStatus: Record<string,string> = { awaiting_payment:"Awaiting payment", paid:"Paid · awaiting photographer", assigned:"Photographer assigned", completed:"Completed", cancelled:"Cancelled" }
+const bookingStatus: Record<string,string> = { awaiting_payment:"Awaiting payment", paid:"Paid · awaiting photographer", assigned:"Photographer assigned", completed:"Photos ready", cancelled:"Cancelled" }
 const planLabels: Record<SubscriptionSummary["plan"],string> = { portfolio5:"Portfolio 5", portfolio10:"Portfolio 10", portfolio20:"Portfolio 20" }
 
 function formatDate(value:string) { return new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric"}).format(new Date(value)) }
@@ -50,6 +50,18 @@ export default function Portal() {
     window.setTimeout(()=>navigate(`/portal/download/${encodeURIComponent(order.id)}`),250)
   }
 
+  function downloadPhotography(booking:Booking){
+    if(!booking.delivery_zip_path||booking.media_deleted_at)return
+    const link=document.createElement("a")
+    link.href=apiDownloadUrl(`photography/delivery/${encodeURIComponent(booking.id)}`)
+    link.target="_blank"
+    link.rel="noopener"
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(()=>void loadOrders(),1200)
+  }
+
   const activeOrders=orders.filter(order=>!["ready","cancelled"].includes(order.status)).length
   const readyOrders=orders.filter(order=>order.status==="ready").length
   const activeSubscription=subscription&&["active","trialing"].includes(subscription.status)?subscription:null
@@ -73,7 +85,7 @@ export default function Portal() {
       {loading&&<section className="account-loading" role="status"><div><strong>MoveIn Media</strong><span>Loading your account…</span></div></section>}
       {error&&<div role="alert" className="border p-5 mb-5"><p>{error}</p><button className="underline mt-3" onClick={()=>void loadOrders()}>Try again</button></div>}
 
-      {!loading&&bookings.length>0&&<section className="mb-12"><div className="flex flex-wrap items-end justify-between gap-4 mb-5"><div><p className="text-xs tracking-widest uppercase" style={{color:"var(--accent)"}}>PHOTOGRAPHY</p><h2 className="text-2xl mt-1" style={{fontFamily:"var(--font-display)"}}>Photographer bookings</h2></div><Link to="/photographer-booking" className="px-5 py-3 text-xs uppercase tracking-widest text-white" style={{background:"var(--primary)"}}>+ Book photographer</Link></div><div className="space-y-3">{bookings.map(booking=><article key={booking.id} className="border p-5 flex flex-wrap justify-between gap-5"><div><small style={{color:"var(--accent)"}}>{formatDate(booking.preferred_date)} · {booking.preferred_time}</small><h3 className="text-lg mt-1">{booking.address}</h3><p className="text-sm text-black/50">{booking.postcode} · £150 property photography</p></div><div className="flex flex-wrap items-center gap-3"><span className="border px-3 py-2 text-sm">{bookingStatus[booking.status]??booking.status}</span>{booking.status==="awaiting_payment"&&<button disabled={payingId===booking.id} onClick={()=>void payBooking(booking.id)} className="px-4 py-2 text-xs uppercase tracking-widest text-white disabled:opacity-50" style={{background:"var(--primary)"}}>{payingId===booking.id?"Opening…":"Pay £150"}</button>}</div></article>)}</div></section>}
+      {!loading&&bookings.length>0&&<section className="mb-12"><div className="flex flex-wrap items-end justify-between gap-4 mb-5"><div><p className="text-xs tracking-widest uppercase" style={{color:"var(--accent)"}}>PHOTOGRAPHY</p><h2 className="text-2xl mt-1" style={{fontFamily:"var(--font-display)"}}>Photographer bookings</h2></div><Link to="/photographer-booking" className="px-5 py-3 text-xs uppercase tracking-widest text-white" style={{background:"var(--primary)"}}>+ Book photographer</Link></div><div className="space-y-3">{bookings.map(booking=><article key={booking.id} className="border p-5 flex flex-wrap justify-between gap-5"><div><small style={{color:"var(--accent)"}}>{formatDate(booking.preferred_date)} · {booking.preferred_time}</small><h3 className="text-lg mt-1">{booking.address}</h3><p className="text-sm text-black/50">{booking.postcode} · £150 property photography</p>{booking.status==="completed"&&!booking.media_deleted_at&&<p className="text-xs text-black/50 mt-2">{booking.photo_count} completed photo{booking.photo_count===1?"":"s"} ready in your private ZIP.</p>}{booking.media_deleted_at&&<p className="text-xs text-black/50 mt-2">Downloaded · completed photos and ZIP permanently deleted from storage.</p>}</div><div className="flex flex-wrap items-center gap-3"><span className="border px-3 py-2 text-sm">{booking.media_deleted_at?"Downloaded · deleted":bookingStatus[booking.status]??booking.status}</span>{booking.status==="awaiting_payment"&&<button disabled={payingId===booking.id} onClick={()=>void payBooking(booking.id)} className="px-4 py-2 text-xs uppercase tracking-widest text-white disabled:opacity-50" style={{background:"var(--primary)"}}>{payingId===booking.id?"Opening…":"Pay £150"}</button>}{booking.status==="completed"&&booking.delivery_zip_path&&!booking.media_deleted_at&&<button onClick={()=>downloadPhotography(booking)} className="px-4 py-2 text-xs uppercase tracking-widest text-white" style={{background:"var(--primary)"}}>Download photos ZIP</button>}</div></article>)}</div></section>}
 
       <div className="grid sm:grid-cols-3 gap-4 mb-10"><div className="p-5 border"><small>TOTAL ORDERS</small><h3 className="mt-2 text-2xl">{orders.length}</h3></div><div className="p-5 border"><small>IN PROGRESS</small><h3 className="mt-2 text-2xl">{activeOrders}</h3></div><div className="p-5 border"><small>READY</small><h3 className="mt-2 text-2xl">{readyOrders}</h3></div></div>
       <div className="flex flex-wrap gap-4 justify-between items-center mb-5"><div><h2 className="text-2xl" style={{fontFamily:"var(--font-display)"}}>Recent properties</h2><p className="text-sm text-black/50 mt-1">Your latest submissions and their current status.</p></div><Link to="/upload" className="px-5 py-3 text-xs uppercase tracking-widest" style={{background:"var(--accent)"}}>+ Upload property</Link></div>
