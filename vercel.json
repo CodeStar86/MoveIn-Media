@@ -22,6 +22,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/gateway?path=:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
