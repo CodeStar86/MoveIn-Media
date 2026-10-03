@@ -108,7 +108,7 @@ export default async function handler(req:any,res:any){
       const up=await invokeFunction("create-checkout-session",ctx.accessToken,{orderId:p[1],returnOrigin:origin(req)}); const text=await up.text(); addCookies(res,ctx.cookies); res.statusCode=up.status; res.setHeader("Content-Type",up.headers.get("content-type")||"application/json"); res.setHeader("Cache-Control","no-store"); return res.end(text)
     }
     if(p[0]==="orders"&&p.length===1&&req.method==="GET"){
-      const {data,error}=await ctx.client.from("orders").select("id,address,service,price_pence,status,description,created_at,delivery_zip_path").eq("user_id",ctx.user.id).order("created_at",{ascending:false}); return error?sendJson(res,400,{error:error.message}):sendJson(res,200,{orders:data??[]},ctx.cookies)
+      const {data,error}=await ctx.client.from("orders").select("id,address,service,price_pence,status,description,created_at,delivery_zip_path,media_deleted_at").eq("user_id",ctx.user.id).order("created_at",{ascending:false}); return error?sendJson(res,400,{error:error.message}):sendJson(res,200,{orders:data??[]},ctx.cookies)
     }
     if(p[0]==="orders"&&p.length===1&&req.method==="POST"){
       const {address,customer_name,service,notes}=await jsonBody(req); const {data,error}=await ctx.client.from("orders").insert({user_id:ctx.user.id,address,customer_name,service,notes}).select("id").single(); return error?sendJson(res,400,{error:error.message}):sendJson(res,200,{id:data.id},ctx.cookies)
@@ -120,7 +120,15 @@ export default async function handler(req:any,res:any){
       const {error}=await ctx.client.rpc("submit_order",{order_id:p[1]}); return error?sendJson(res,400,{error:error.message}):sendJson(res,200,{ok:true},ctx.cookies)
     }
     if(p[0]==="orders"&&p[1]&&p[2]==="delivery"&&req.method==="GET"){
-      const {data:order,error}=await ctx.client.from("orders").select("delivery_zip_path").eq("id",p[1]).eq("user_id",ctx.user.id).single(); if(error||!order?.delivery_zip_path) return sendJson(res,404,{error:"Delivery not available"}); const dl=await ctx.client.storage.from("property-photos").download(order.delivery_zip_path); if(dl.error||!dl.data) return sendJson(res,400,{error:dl.error?.message||"Download failed"}); addCookies(res,ctx.cookies); res.statusCode=200; res.setHeader("Content-Type","application/zip"); res.setHeader("Content-Disposition",`attachment; filename=\"movein-media-${p[1]}.zip\"`); res.setHeader("Cache-Control","private, no-store"); return res.end(Buffer.from(await dl.data.arrayBuffer()))
+      const {data:order,error}=await ctx.client.from("orders").select("delivery_zip_path,media_deleted_at").eq("id",p[1]).eq("user_id",ctx.user.id).single();
+      if(error||!order) return sendJson(res,404,{error:"Delivery not available"});
+      if(order.media_deleted_at||!order.delivery_zip_path) return sendJson(res,410,{error:"This delivery has already been downloaded and its stored photos have been deleted."});
+      const dl=await ctx.client.storage.from("property-photos").download(order.delivery_zip_path);
+      if(dl.error||!dl.data) return sendJson(res,400,{error:dl.error?.message||"Download failed"});
+      const bytes=Buffer.from(await dl.data.arrayBuffer());
+      const purge=await invokeFunction("purge-order-media",ctx.accessToken,{order_id:p[1]});
+      if(!purge.ok){ const detail=await purge.json().catch(()=>null); return sendJson(res,500,{error:detail?.error||"The ZIP was prepared, but stored photos could not be deleted. Please retry."}); }
+      addCookies(res,ctx.cookies); res.statusCode=200; res.setHeader("Content-Type","application/zip"); res.setHeader("Content-Disposition",`attachment; filename=\"movein-media-${p[1]}.zip\"`); res.setHeader("Cache-Control","private, no-store, max-age=0"); res.setHeader("Pragma","no-cache"); return res.end(bytes)
     }
 
     if(p[0]==="admin"&&p[1]==="dashboard"&&req.method==="GET"){
