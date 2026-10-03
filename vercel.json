@@ -23,6 +23,7 @@
   ],
   "rewrites": [
     { "source": "/api/subscription/:path*", "destination": "/api/subscription?path=:path*" },
+    { "source": "/api/orders/:id/submit", "destination": "/api/order-submit?id=:id" },
     { "source": "/api/:path*", "destination": "/api/gateway?path=:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
