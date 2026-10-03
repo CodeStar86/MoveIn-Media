@@ -11,6 +11,7 @@ const AIImageUpgrade = lazy(() => import("./pages/AIImageUpgrade"))
 const BeforeAfterPage = lazy(() => import("./pages/BeforeAfterPage"))
 const Pricing = lazy(() => import("./pages/Pricing"))
 const UploadPhotos = lazy(() => import("./pages/UploadPhotos"))
+const PhotographerBooking = lazy(() => import("./pages/PhotographerBooking"))
 const Portal = lazy(() => import("./pages/Portal"))
 const DownloadStatus = lazy(() => import("./pages/DownloadStatus"))
 const Login = lazy(() => import("./pages/Login"))
@@ -47,12 +48,13 @@ export default function App() {
                 <Route path="/before-after" element={<BeforeAfterPage />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/upload" element={<Protected><UploadPhotos /></Protected>} />
+                <Route path="/photographer-booking" element={<Protected><PhotographerBooking /></Protected>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/portal" element={<Protected><Portal /></Protected>} />
                 <Route path="/portal/download/:orderId" element={<Protected><DownloadStatus /></Protected>} />
                 <Route path="/admin" element={<RoleProtected role="admin"><AdminDashboard /></RoleProtected>} />
                 <Route path="/photographer" element={<RoleProtected role="photographer"><PhotographerDashboard /></RoleProtected>} />
-                <Route path="/book" element={<Navigate to="/upload" replace />} />
+                <Route path="/book" element={<Navigate to="/photographer-booking" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
