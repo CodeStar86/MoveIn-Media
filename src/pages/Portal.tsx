@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { Link, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { startCheckout } from "../lib/payments"
 import { services } from "../lib/services"
 import { apiDownloadUrl, apiJson } from "../lib/api"
@@ -41,6 +41,7 @@ function formatPrice(pence: number | null) {
 
 export default function Portal() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [orders, setOrders] = useState<Order[]>([])
   const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -73,7 +74,16 @@ export default function Portal() {
 
   function downloadDelivery(order: Order) {
     if (!order.delivery_zip_path) return
-    window.location.assign(apiDownloadUrl(`orders/${encodeURIComponent(order.id)}/delivery`))
+
+    const link = document.createElement("a")
+    link.href = apiDownloadUrl(`orders/${encodeURIComponent(order.id)}/delivery`)
+    link.target = "_blank"
+    link.rel = "noopener"
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+
+    window.setTimeout(() => navigate(`/portal/download/${encodeURIComponent(order.id)}`), 250)
   }
 
   const activeOrders = orders.filter((order) => !["ready", "cancelled"].includes(order.status)).length
@@ -105,7 +115,7 @@ export default function Portal() {
       {loading && <section className="account-loading" role="status"><div><strong>MoveIn Media</strong><span>Loading your properties…</span></div></section>}
       {error && <div role="alert" className="border p-5 mb-5"><p>{error}</p><button className="underline mt-3" onClick={() => void loadOrders()}>Try again</button></div>}
       {!loading && !error && orders.length === 0 && <div className="border p-8 text-center"><h3 className="text-xl">No properties yet</h3><p className="text-black/60 mt-2 mb-5">Submit your first property and it will appear here.</p><Link to="/upload" className="inline-block px-5 py-3 text-sm" style={{ background: "var(--primary)", color: "white" }}>Upload a property</Link></div>}
-      {!loading && orders.length > 0 && <div className="space-y-3">{orders.map((order) => <article key={order.id} className="p-5 border flex flex-wrap gap-4 justify-between items-start"><div><small style={{ color: "var(--accent)" }}>{formatDate(order.created_at)}</small><div className="font-medium mt-1">{order.address}</div><small className="text-black/50">{serviceName.get(order.service) ?? order.service} · standard {formatPrice(order.price_pence)}</small>{order.status === "ready" && order.description && <p className="mt-3 text-sm max-w-3xl whitespace-pre-wrap">{order.description}</p>}{order.media_deleted_at && <p className="mt-3 text-xs text-black/50">Downloaded {formatDate(order.media_deleted_at)} · stored property photos and delivery ZIP deleted.</p>}</div><div className="flex items-center gap-3"><span className="text-sm border px-3 py-1">{statusLabels[order.status] ?? order.status}</span>{order.status === "awaiting_payment" && <button type="button" disabled={payingId === order.id} onClick={() => void pay(order.id)} className="px-4 py-2 text-xs uppercase tracking-widest text-white disabled:opacity-50" style={{ background: "var(--primary)" }}>{payingId === order.id ? "Opening…" : "Pay now"}</button>}{order.status === "ready" && order.delivery_zip_path && !order.media_deleted_at && <button type="button" onClick={() => downloadDelivery(order)} className="px-4 py-2 text-xs uppercase tracking-widest text-white" style={{ background: "var(--primary)" }}>Download edited ZIP</button>}</div></article>)}</div>}
+      {!loading && orders.length > 0 && <div className="space-y-3">{orders.map((order) => <article key={order.id} className="p-5 border flex flex-wrap gap-4 justify-between items-start"><div><small style={{ color: "var(--accent)" }}>{formatDate(order.created_at)}</small><div className="font-medium mt-1">{order.address}</div><small className="text-black/50">{serviceName.get(order.service) ?? order.service} · standard {formatPrice(order.price_pence)}</small>{order.status === "ready" && order.description && <p className="mt-3 text-sm max-w-3xl whitespace-pre-wrap">{order.description}</p>}{order.media_deleted_at && <p className="mt-3 text-xs text-black/50">Downloaded {formatDate(order.media_deleted_at)} · stored property photos and delivery ZIP deleted.</p>}</div><div className="flex flex-wrap items-center gap-3"><span className="text-sm border px-3 py-1">{statusLabels[order.status] ?? order.status}</span>{order.status === "awaiting_payment" && <button type="button" disabled={payingId === order.id} onClick={() => void pay(order.id)} className="px-4 py-2 text-xs uppercase tracking-widest text-white disabled:opacity-50" style={{ background: "var(--primary)" }}>{payingId === order.id ? "Opening…" : "Pay now"}</button>}{order.status === "ready" && order.delivery_zip_path && !order.media_deleted_at && <button type="button" onClick={() => downloadDelivery(order)} className="px-4 py-2 text-xs uppercase tracking-widest text-white" style={{ background: "var(--primary)" }}>Download edited ZIP</button>}{order.status === "ready" && order.media_deleted_at && <Link to={`/portal/download/${encodeURIComponent(order.id)}`} className="px-4 py-2 text-xs uppercase tracking-widest border" style={{ borderColor: "var(--border)" }}>View download status</Link>}</div></article>)}</div>}
     </section>
   </div>
 }
