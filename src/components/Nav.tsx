@@ -6,6 +6,7 @@ const links = [
   { to: "/property-image-editing", label: "Services" },
   { to: "/estate-agents", label: "Estate Agents" },
   { to: "/airbnb", label: "Airbnb & Short-Lets" },
+  { to: "/photographer-booking", label: "Book Photographer" },
   { to: "/before-after", label: "Before & After" },
   { to: "/pricing", label: "Pricing" },
 ]
