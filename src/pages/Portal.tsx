@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
-import { useAuth } from "../lib/auth"
 import { startCheckout } from "../lib/payments"
 import { services } from "../lib/services"
-import { supabase } from "../lib/supabase"
+import { apiDownloadUrl, apiJson } from "../lib/api"
 
 type Order = {
   id: string
@@ -28,7 +27,6 @@ function formatPrice(pence: number | null) {
 }
 
 export default function Portal() {
-  const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,13 +34,16 @@ export default function Portal() {
   const [payingId, setPayingId] = useState<string | null>(null)
 
   const loadOrders = useCallback(async () => {
-    if (!user) return
     setLoading(true); setError("")
-    const { data, error: queryError } = await supabase.from("orders").select("id,address,service,price_pence,status,description,created_at,delivery_zip_path").eq("user_id", user.id).order("created_at", { ascending: false })
-    if (queryError) { setError("We couldn't load your properties. Please refresh and try again."); console.error(queryError) }
-    else setOrders((data ?? []) as Order[])
-    setLoading(false)
-  }, [user])
+    try {
+      const data = await apiJson<{ orders: Order[] }>("orders")
+      setOrders(data.orders)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We couldn't load your properties. Please refresh and try again.")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => { void loadOrders() }, [loadOrders])
 
@@ -52,13 +53,9 @@ export default function Portal() {
     catch (e) { setError(e instanceof Error ? e.message : "Checkout could not be started."); setPayingId(null) }
   }
 
-
-  async function downloadDelivery(order: Order) {
+  function downloadDelivery(order: Order) {
     if (!order.delivery_zip_path) return
-    setError("")
-    const { data, error } = await supabase.storage.from("property-photos").createSignedUrl(order.delivery_zip_path, 300, { download: `movein-media-${order.id}.zip` })
-    if (error || !data?.signedUrl) { setError(error?.message || "Could not prepare the ZIP download."); return }
-    window.location.assign(data.signedUrl)
+    window.location.assign(apiDownloadUrl(`orders/${encodeURIComponent(order.id)}/delivery`))
   }
 
   const activeOrders = orders.filter((order) => !["ready", "cancelled"].includes(order.status)).length
@@ -75,7 +72,7 @@ export default function Portal() {
       {loading && <section className="account-loading" role="status"><div><strong>MoveIn Media</strong><span>Loading your properties…</span></div></section>}
       {error && <div role="alert" className="border p-5 mb-5"><p>{error}</p><button className="underline mt-3" onClick={() => void loadOrders()}>Try again</button></div>}
       {!loading && !error && orders.length === 0 && <div className="border p-8 text-center"><h3 className="text-xl">No properties yet</h3><p className="text-black/60 mt-2 mb-5">Submit your first property and it will appear here.</p><Link to="/upload" className="inline-block px-5 py-3 text-sm" style={{ background: "var(--primary)", color: "white" }}>Upload a property</Link></div>}
-      {!loading && orders.length > 0 && <div className="space-y-3">{orders.map((order) => <article key={order.id} className="p-5 border flex flex-wrap gap-4 justify-between items-start"><div><small style={{ color: "var(--accent)" }}>{formatDate(order.created_at)}</small><div className="font-medium mt-1">{order.address}</div><small className="text-black/50">{serviceName.get(order.service) ?? order.service} · {formatPrice(order.price_pence)}</small>{order.status === "ready" && order.description && <p className="mt-3 text-sm max-w-3xl whitespace-pre-wrap">{order.description}</p>}</div><div className="flex items-center gap-3"><span className="text-sm border px-3 py-1">{statusLabels[order.status] ?? order.status}</span>{order.status === "awaiting_payment" && <button type="button" disabled={payingId === order.id} onClick={() => void pay(order.id)} className="px-4 py-2 text-xs uppercase tracking-widest text-white disabled:opacity-50" style={{ background: "var(--primary)" }}>{payingId === order.id ? "Opening…" : `Pay ${formatPrice(order.price_pence)}`}</button>}{order.status === "ready" && order.delivery_zip_path && <button type="button" onClick={() => void downloadDelivery(order)} className="px-4 py-2 text-xs uppercase tracking-widest text-white" style={{ background: "var(--primary)" }}>Download edited ZIP</button>}</div></article>)}</div>}
+      {!loading && orders.length > 0 && <div className="space-y-3">{orders.map((order) => <article key={order.id} className="p-5 border flex flex-wrap gap-4 justify-between items-start"><div><small style={{ color: "var(--accent)" }}>{formatDate(order.created_at)}</small><div className="font-medium mt-1">{order.address}</div><small className="text-black/50">{serviceName.get(order.service) ?? order.service} · {formatPrice(order.price_pence)}</small>{order.status === "ready" && order.description && <p className="mt-3 text-sm max-w-3xl whitespace-pre-wrap">{order.description}</p>}</div><div className="flex items-center gap-3"><span className="text-sm border px-3 py-1">{statusLabels[order.status] ?? order.status}</span>{order.status === "awaiting_payment" && <button type="button" disabled={payingId === order.id} onClick={() => void pay(order.id)} className="px-4 py-2 text-xs uppercase tracking-widest text-white disabled:opacity-50" style={{ background: "var(--primary)" }}>{payingId === order.id ? "Opening…" : `Pay ${formatPrice(order.price_pence)}`}</button>}{order.status === "ready" && order.delivery_zip_path && <button type="button" onClick={() => downloadDelivery(order)} className="px-4 py-2 text-xs uppercase tracking-widest text-white" style={{ background: "var(--primary)" }}>Download edited ZIP</button>}</div></article>)}</div>}
     </section>
   </div>
 }
