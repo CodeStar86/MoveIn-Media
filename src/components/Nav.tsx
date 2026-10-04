@@ -9,6 +9,7 @@ const links = [
   { to: "/photographer-booking", label: "Book Photographer" },
   { to: "/before-after", label: "Before & After" },
   { to: "/pricing", label: "Pricing" },
+  { to: "/contact", label: "Contact" },
 ]
 
 export default function Nav() {
