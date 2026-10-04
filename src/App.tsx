@@ -12,6 +12,7 @@ const Airbnb = lazy(() => import("./pages/Airbnb"))
 const AIImageUpgrade = lazy(() => import("./pages/AIImageUpgrade"))
 const BeforeAfterPage = lazy(() => import("./pages/BeforeAfterPage"))
 const Pricing = lazy(() => import("./pages/Pricing"))
+const Contact = lazy(() => import("./pages/Contact"))
 const UploadPhotos = lazy(() => import("./pages/UploadPhotos"))
 const PhotographerBooking = lazy(() => import("./pages/PhotographerBooking"))
 const Portal = lazy(() => import("./pages/Portal"))
@@ -53,6 +54,7 @@ export default function App() {
                 <Route path="/ai-image-upgrade" element={<Navigate to="/property-image-editing" replace />} />
                 <Route path="/before-after" element={<BeforeAfterPage />} />
                 <Route path="/pricing" element={<Pricing />} />
+                <Route path="/contact" element={<Contact />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/cookies" element={<Cookies />} />
                 <Route path="/refunds-cancellations" element={<Refunds />} />
