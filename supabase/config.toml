@@ -1,0 +1,16 @@
+project_id = "jmsynpiuekvacnzwmuhy"
+
+[auth]
+site_url = "https://www.movein-media.co.uk"
+additional_redirect_urls = [
+  "https://www.movein-media.co.uk/login",
+  "https://www.movein-media.co.uk/portal",
+  "http://localhost:3000/**",
+  "http://localhost:4173/**",
+]
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false

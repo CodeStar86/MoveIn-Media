@@ -1,0 +1,190 @@
+/* Desktop layout refinements. Loaded after index.css and mobile.css. */
+
+.site-nav-shell {
+  width: min(1440px, calc(100% - 64px));
+  min-height: 76px;
+  margin-inline: auto;
+  gap: 28px;
+}
+
+.site-brand {
+  width: 112px;
+  flex: 0 0 112px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 18px;
+  line-height: 1.05;
+  letter-spacing: .14em;
+  white-space: nowrap;
+}
+
+.desktop-nav {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 2vw, 34px);
+}
+
+.desktop-nav-link {
+  max-width: 150px;
+  font-size: 11px;
+  line-height: 1.25;
+  letter-spacing: .12em;
+  text-align: left;
+}
+
+.desktop-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.desktop-account-link {
+  padding: 10px 2px;
+  color: rgba(245,240,234,.65);
+  font-size: 10px;
+  line-height: 1.25;
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+
+.desktop-upload-link {
+  min-width: 172px;
+  padding: 16px 22px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: .13em;
+  text-align: center;
+}
+
+.mobile-menu-button,
+.mobile-nav-panel {
+  display: none;
+}
+
+@media (min-width: 1181px) {
+  .hero-classic {
+    min-height: 640px;
+  }
+
+  .hero-classic-image,
+  .hero-classic-shade {
+    inset-bottom: 76px;
+  }
+
+  .hero-classic-image img {
+    object-position: 58% center;
+  }
+
+  .hero-classic-content {
+    align-items: center;
+    padding-top: 58px;
+    padding-bottom: 124px;
+    padding-left: max(54px, calc((100vw - 1440px) / 2));
+    padding-right: max(54px, calc((100vw - 1440px) / 2));
+  }
+
+  .hero-classic-copy {
+    width: min(690px, 46vw);
+  }
+
+  .hero-classic-eyebrow {
+    margin-bottom: 20px;
+    font-size: 10px;
+  }
+
+  .hero-classic-copy h1 {
+    max-width: 680px;
+    margin-bottom: 28px;
+    font-size: clamp(64px, 5.5vw, 90px);
+    line-height: .9;
+    letter-spacing: -.05em;
+  }
+
+  .hero-classic-copy p {
+    max-width: 650px;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  .hero-classic-actions {
+    margin-top: 30px;
+  }
+
+  .hero-feature-bar,
+  .hero-feature-bar .shell {
+    min-height: 76px;
+  }
+
+  .hero-feature-bar .shell {
+    width: min(1320px, calc(100% - 80px));
+  }
+
+  .hero-feature-bar span {
+    font-size: 9px;
+  }
+}
+
+@media (min-width: 1181px) and (max-width: 1360px) {
+  .site-nav-shell {
+    width: calc(100% - 40px);
+    gap: 18px;
+  }
+
+  .site-brand {
+    width: 96px;
+    flex-basis: 96px;
+    font-size: 16px;
+  }
+
+  .desktop-nav {
+    gap: 17px;
+  }
+
+  .desktop-nav-link {
+    font-size: 9.5px;
+    letter-spacing: .1em;
+  }
+
+  .desktop-upload-link {
+    min-width: 150px;
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .site-nav-shell {
+    width: 100%;
+    min-height: 64px;
+    padding-inline: 24px;
+  }
+
+  .site-brand {
+    width: auto;
+    flex-basis: auto;
+    display: block;
+    font-size: 17px;
+  }
+
+  .site-brand span + span {
+    margin-left: 7px;
+  }
+
+  .desktop-nav,
+  .desktop-actions {
+    display: none;
+  }
+
+  .mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .mobile-nav-panel {
+    display: flex;
+  }
+}
