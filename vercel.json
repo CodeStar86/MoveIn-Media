@@ -149,6 +149,10 @@
       "destination": "/api/order-submit?id=:id"
     },
     {
+      "source": "/api/enquiries/:path*",
+      "destination": "/api/enquiries?path=:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/gateway?path=:path*"
     },
