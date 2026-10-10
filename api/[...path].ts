@@ -141,8 +141,24 @@ export default async function handler(req:any,res:any){
     if(p[0]==="photographer"&&p[1]==="jobs"&&p[2]&&p[3]==="upload"&&req.method==="POST"){
       if(!requireRole(ctx,"photographer")) return sendJson(res,403,{error:"Forbidden"}); const {data:job,error}=await ctx.client.from("orders").select("user_id,status").eq("id",p[2]).eq("photographer_id",ctx.user.id).single(); if(error||!job) return sendJson(res,404,{error:"Job not found"}); if(job.status==="ready") return sendJson(res,400,{error:"This job is already ready"}); const i=Number(req.headers["x-file-index"]||"0"),name=String(req.headers["x-file-name"]||"edited.jpg").replace(/[^a-zA-Z0-9._-]/g,"-"),type=String(req.headers["content-type"]||""); if(!type.startsWith("image/")) return sendJson(res,400,{error:"Edited files must be images"}); const body=await rawBody(req,4*1024*1024); const {error:upErr}=await ctx.client.storage.from("property-photos").upload(`${job.user_id}/${p[2]}/output/${String(i+1).padStart(2,"0")}-${name}`,body,{upsert:true,contentType:type}); return upErr?sendJson(res,400,{error:upErr.message}):sendJson(res,200,{ok:true},ctx.cookies)
     }
+    if(p[0]==="photographer"&&p[1]==="jobs"&&p[2]&&p[3]==="description"&&p.length===4&&req.method==="POST"){
+      if(!requireRole(ctx,"photographer")) return sendJson(res,403,{error:"Forbidden"});
+      const body=await jsonBody(req);
+      if(typeof body.description!=="string") return sendJson(res,400,{error:"A property description is required"});
+      const description=body.description.trim();
+      if(!description||description.length>20000) return sendJson(res,400,{error:"Description must be between 1 and 20,000 characters"});
+      const {data:job,error}=await ctx.client.from("orders").select("id,service,status").eq("id",p[2]).eq("photographer_id",ctx.user.id).single();
+      if(error||!job) return sendJson(res,404,{error:"Job not found"});
+      if(!["description","declutter-description","stage-description"].includes(job.service)) return sendJson(res,400,{error:"This package does not include a property description"});
+      if(job.status!=="processing") return sendJson(res,409,{error:"This job is no longer accepting descriptions"});
+      const update=job.service==="description"?{description,status:"ready"}:{description};
+      const {data:saved,error:saveError}=await ctx.client.from("orders").update(update).eq("id",job.id).eq("photographer_id",ctx.user.id).eq("status","processing").select("id").maybeSingle();
+      if(saveError) return sendJson(res,400,{error:saveError.message},ctx.cookies);
+      if(!saved) return sendJson(res,409,{error:"Job changed while saving. Please refresh."},ctx.cookies);
+      return sendJson(res,200,{ok:true,ready:job.service==="description"},ctx.cookies);
+    }
     if(p[0]==="photographer"&&p[1]==="jobs"&&p[2]&&p[3]==="deliver"&&req.method==="POST"){
-      if(!requireRole(ctx,"photographer")) return sendJson(res,403,{error:"Forbidden"}); const up=await invokeFunction("create-delivery-zip",ctx.accessToken,{order_id:p[2]}); const text=await up.text(); addCookies(res,ctx.cookies); res.statusCode=up.status; res.setHeader("Content-Type",up.headers.get("content-type")||"application/json"); return res.end(text)
+      if(!requireRole(ctx,"photographer")) return sendJson(res,403,{error:"Forbidden"}); const {data:job,error}=await ctx.client.from("orders").select("service,description").eq("id",p[2]).eq("photographer_id",ctx.user.id).single(); if(error||!job) return sendJson(res,404,{error:"Job not found"}); if(job.service==="description") return sendJson(res,400,{error:"Use Send description to client for this package"}); if(job.service.endsWith("-description")&&!job.description?.trim()) return sendJson(res,400,{error:"Save the property description before delivering photos"}); const up=await invokeFunction("create-delivery-zip",ctx.accessToken,{order_id:p[2]}); const text=await up.text(); addCookies(res,ctx.cookies); res.statusCode=up.status; res.setHeader("Content-Type",up.headers.get("content-type")||"application/json"); return res.end(text)
     }
 
     return sendJson(res,404,{error:"Not found"})
