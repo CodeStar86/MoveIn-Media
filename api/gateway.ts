@@ -108,7 +108,7 @@ export default async function handler(req:any,res:any){
       const up=await invokeFunction("create-checkout-session",ctx.accessToken,{orderId:p[1],returnOrigin:origin(req)}); const text=await up.text(); addCookies(res,ctx.cookies); res.statusCode=up.status; res.setHeader("Content-Type",up.headers.get("content-type")||"application/json"); res.setHeader("Cache-Control","no-store"); return res.end(text)
     }
     if(p[0]==="orders"&&p.length===1&&req.method==="GET"){
-      const {data,error}=await ctx.client.from("orders").select("id,address,service,price_pence,status,description,created_at,delivery_zip_path,media_deleted_at").eq("user_id",ctx.user.id).order("created_at",{ascending:false}); return error?sendJson(res,400,{error:error.message}):sendJson(res,200,{orders:data??[]},ctx.cookies)
+      const {data,error}=await ctx.client.from("orders").select("id,address,service,price_pence,status,description,created_at,delivery_zip_path,media_deleted_at,client_completed_at").eq("user_id",ctx.user.id).order("created_at",{ascending:false}); return error?sendJson(res,400,{error:error.message}):sendJson(res,200,{orders:data??[]},ctx.cookies)
     }
     if(p[0]==="orders"&&p.length===1&&req.method==="POST"){
       const {address,customer_name,service,notes}=await jsonBody(req); const {data,error}=await ctx.client.from("orders").insert({user_id:ctx.user.id,address,customer_name,service,notes}).select("id").single(); return error?sendJson(res,400,{error:error.message}):sendJson(res,200,{id:data.id},ctx.cookies)
@@ -118,6 +118,10 @@ export default async function handler(req:any,res:any){
     }
     if(p[0]==="orders"&&p[1]&&p[2]==="submit"&&req.method==="POST"){
       const {error}=await ctx.client.rpc("submit_order",{order_id:p[1]}); return error?sendJson(res,400,{error:error.message}):sendJson(res,200,{ok:true},ctx.cookies)
+    }
+    if(p[0]==="orders"&&p[1]&&p[2]==="complete"&&req.method==="POST"){
+      const {error}=await ctx.client.rpc("client_complete_order",{p_order_id:p[1]});
+      return error?sendJson(res,400,{error:error.message},ctx.cookies):sendJson(res,200,{ok:true},ctx.cookies);
     }
     if(p[0]==="orders"&&p[1]&&p[2]==="delivery"&&req.method==="GET"){
       const {data:order,error}=await ctx.client.from("orders").select("delivery_zip_path,media_deleted_at").eq("id",p[1]).eq("user_id",ctx.user.id).single();
@@ -132,7 +136,7 @@ export default async function handler(req:any,res:any){
     }
 
     if(p[0]==="admin"&&p[1]==="dashboard"&&req.method==="GET"){
-      if(!requireRole(ctx,"admin")) return sendJson(res,403,{error:"Forbidden"}); const [{data:people,error:pe},{data:jobs,error:je}]=await Promise.all([ctx.client.from("staff_profiles").select("user_id,display_name,email,active").eq("role","photographer").order("display_name"),ctx.client.from("orders").select("id,customer_name,address,service,status,created_at,photographer_id").in("status",["paid","processing","ready"]).order("created_at",{ascending:false})]); return pe||je?sendJson(res,400,{error:pe?.message||je?.message||"Could not load dashboard"}):sendJson(res,200,{photographers:people??[],orders:jobs??[]},ctx.cookies)
+      if(!requireRole(ctx,"admin")) return sendJson(res,403,{error:"Forbidden"}); const [{data:people,error:pe},{data:jobs,error:je}]=await Promise.all([ctx.client.from("staff_profiles").select("user_id,display_name,email,active").eq("role","photographer").order("display_name"),ctx.client.from("orders").select("id,customer_name,address,service,status,created_at,photographer_id").in("status",["paid","processing","ready"]).is("client_completed_at",null).order("created_at",{ascending:false})]); return pe||je?sendJson(res,400,{error:pe?.message||je?.message||"Could not load dashboard"}):sendJson(res,200,{photographers:people??[],orders:jobs??[]},ctx.cookies)
     }
     if(p[0]==="admin"&&p[1]==="photographers"&&req.method==="POST"){
       if(!requireRole(ctx,"admin")) return sendJson(res,403,{error:"Forbidden"}); const body=await jsonBody(req); const up=await invokeFunction("admin-add-photographer",ctx.accessToken,body); const text=await up.text(); addCookies(res,ctx.cookies); res.statusCode=up.status; res.setHeader("Content-Type",up.headers.get("content-type")||"application/json"); return res.end(text)
@@ -142,7 +146,7 @@ export default async function handler(req:any,res:any){
     }
 
     if(p[0]==="photographer"&&p[1]==="jobs"&&p.length===2&&req.method==="GET"){
-      if(!requireRole(ctx,"photographer")) return sendJson(res,403,{error:"Forbidden"}); const {data,error}=await ctx.client.from("orders").select("id,user_id,address,customer_name,service,notes,status,description,created_at").eq("photographer_id",ctx.user.id).in("status",["processing","ready"]).order("created_at",{ascending:false}); if(error) return sendJson(res,400,{error:error.message}); const jobs=data??[]; const files:Record<string,{source:string[];output:string[]}>={}; for(const job of jobs){const a=`${job.user_id}/${job.id}/source`,b=`${job.user_id}/${job.id}/output`; const [{data:s},{data:o}]=await Promise.all([ctx.client.storage.from("property-photos").list(a,{limit:100,sortBy:{column:"name",order:"asc"}}),ctx.client.storage.from("property-photos").list(b,{limit:100,sortBy:{column:"name",order:"asc"}})]); files[job.id]={source:(s??[]).filter(x=>x.name).map(x=>x.name),output:(o??[]).filter(x=>x.name).map(x=>x.name)}} return sendJson(res,200,{jobs,files},ctx.cookies)
+      if(!requireRole(ctx,"photographer")) return sendJson(res,403,{error:"Forbidden"}); const {data,error}=await ctx.client.from("orders").select("id,user_id,address,customer_name,service,notes,status,description,created_at").eq("photographer_id",ctx.user.id).in("status",["processing","ready"]).is("client_completed_at",null).order("created_at",{ascending:false}); if(error) return sendJson(res,400,{error:error.message}); const jobs=data??[]; const files:Record<string,{source:string[];output:string[]}>={}; for(const job of jobs){const a=`${job.user_id}/${job.id}/source`,b=`${job.user_id}/${job.id}/output`; const [{data:s},{data:o}]=await Promise.all([ctx.client.storage.from("property-photos").list(a,{limit:100,sortBy:{column:"name",order:"asc"}}),ctx.client.storage.from("property-photos").list(b,{limit:100,sortBy:{column:"name",order:"asc"}})]); files[job.id]={source:(s??[]).filter(x=>x.name).map(x=>x.name),output:(o??[]).filter(x=>x.name).map(x=>x.name)}} return sendJson(res,200,{jobs,files},ctx.cookies)
     }
     if(p[0]==="photographer"&&p[1]==="jobs"&&p[2]&&p[3]==="source"&&p[4]&&req.method==="GET"){
       if(!requireRole(ctx,"photographer")) return sendJson(res,403,{error:"Forbidden"}); const {data:job,error}=await ctx.client.from("orders").select("user_id").eq("id",p[2]).eq("photographer_id",ctx.user.id).single(); if(error||!job) return sendJson(res,404,{error:"Job not found"}); const dl=await ctx.client.storage.from("property-photos").download(`${job.user_id}/${p[2]}/source/${p[4]}`); if(dl.error||!dl.data) return sendJson(res,404,{error:dl.error?.message||"File not found"}); addCookies(res,ctx.cookies); res.statusCode=200; res.setHeader("Content-Type",dl.data.type||"application/octet-stream"); res.setHeader("Cache-Control","private, max-age=300"); return res.end(Buffer.from(await dl.data.arrayBuffer()))
