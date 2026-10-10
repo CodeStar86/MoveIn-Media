@@ -119,7 +119,7 @@ export default async function handler(req: any, res: any) {
 
     if (path === "bookings" && req.method === "GET") {
       const { data, error } = await ctx.client.from("photography_bookings")
-        .select("id,address,postcode,contact_name,phone,preferred_date,preferred_time,notes,price_pence,status,photographer_id,created_at,paid_at,assigned_at,completed_at,delivered_at,delivery_zip_path,media_deleted_at,photo_count")
+        .select("id,address,postcode,contact_name,phone,preferred_date,preferred_time,notes,price_pence,status,photographer_id,created_at,paid_at,assigned_at,completed_at,delivered_at,delivery_zip_path,media_deleted_at,photo_count,client_completed_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
       return error ? sendJson(res, 400, { error: error.message }, ctx.setCookies) : sendJson(res, 200, { bookings: data ?? [] }, ctx.setCookies)
@@ -169,6 +169,12 @@ export default async function handler(req: any, res: any) {
       return res.end(text)
     }
 
+    if (path.startsWith("complete/") && req.method === "POST") {
+      const bookingId = path.slice("complete/".length)
+      const { error } = await ctx.client.rpc("client_complete_photography", { p_booking_id: bookingId })
+      return error ? sendJson(res, 400, { error: error.message }, ctx.setCookies) : sendJson(res, 200, { ok: true }, ctx.setCookies)
+    }
+
     if (path.startsWith("delivery/") && req.method === "GET") {
       const bookingId = path.slice("delivery/".length)
       const { data: booking, error } = await ctx.client.from("photography_bookings")
@@ -206,6 +212,7 @@ export default async function handler(req: any, res: any) {
         ctx.client.from("photography_bookings")
           .select("id,address,postcode,contact_name,phone,preferred_date,preferred_time,notes,price_pence,status,photographer_id,created_at,paid_at,assigned_at,completed_at,delivered_at,photo_count")
           .in("status", ["paid", "assigned", "completed"])
+          .is("client_completed_at", null)
           .order("preferred_date", { ascending: true }),
         ctx.client.from("staff_profiles").select("user_id,display_name,email,active").eq("role", "photographer").order("display_name"),
       ])
@@ -233,6 +240,7 @@ export default async function handler(req: any, res: any) {
         .select("id,address,postcode,contact_name,phone,preferred_date,preferred_time,notes,status,created_at,assigned_at,completed_at,delivered_at,photo_count,media_deleted_at")
         .eq("photographer_id", user.id)
         .in("status", ["assigned", "completed"])
+        .is("client_completed_at", null)
         .order("preferred_date", { ascending: true })
       return error ? sendJson(res, 400, { error: error.message }, ctx.setCookies) : sendJson(res, 200, { bookings: data ?? [] }, ctx.setCookies)
     }
