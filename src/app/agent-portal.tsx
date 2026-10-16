@@ -82,7 +82,7 @@ export function AgentPortal(){
   setBusy(true);setError("")
   try{
    const session=getSession();if(!session)throw Error("Sign in required")
-   const r=await fetch("/api/agent/checkout",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({bookingId})})
+   const r=await fetch(configUrl+"/functions/v1/stripe-billing?action=checkout",{method:"POST",headers:{"Content-Type":"application/json",apikey:configKey,Authorization:"Bearer "+session.access_token},body:JSON.stringify({bookingId})})
    const data=await r.json().catch(()=>({})) as {url?:string;error?:string}
    if(!r.ok||!data.url)throw Error(data.error||"Could not start payment")
    window.location.assign(data.url)
