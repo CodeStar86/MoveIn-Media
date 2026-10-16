@@ -1,3 +1,4 @@
+import { adminBooking, customerReceipt } from './email-templates'
 /** Booking enquiry endpoint. Requires Supabase, Cloudflare Turnstile and Resend configuration in production. */
 type RequestLike = { method?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
 type ResponseLike = { status: (code: number) => ResponseLike; json: (body: unknown) => void; setHeader: (name: string, value: string) => void }
@@ -127,20 +128,36 @@ export default async function handler(req: RequestLike, res: ResponseLike) {
     ['Address',safeText(payload.address)],['Postcode',safeText(payload.postcode)],['Property type',safeText(payload.propertyType)],
     ['Size',safeText(payload.size)],['Purpose',safeText(payload.purpose)],['Preferred date',date],['Preferred time',safeText(payload.time)],
     ['Package',safeText(payload.package)],['Instructions',safeText(payload.instructions)||'—']]
-  try {
-    const response=await fetch('https://api.resend.com/emails',{
-      method:'POST',headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json'},signal:AbortSignal.timeout(8000),
-      body:JSON.stringify({from:process.env.BOOKING_FROM_EMAIL,to:[process.env.BOOKING_TO_EMAIL],reply_to:email,
-        subject:`Booking request — ${safeText(payload.postcode)} — ${safeText(payload.name)}`,
-        html:`<h1>New property booking request</h1>${fields.map(([label,value])=>`<p><strong>${escapeHtml(label)}:</strong><br>${escapeHtml(value).replace(/\n/g,'<br>')}</p>`).join('')}`})
-    })
-    if (!response.ok) {
-      console.error('Resend rejected booking',response.status)
-      await updateDelivery(bookingId,'failed',process.env.BOOKING_TO_EMAIL!)
-      return res.status(202).json({ok:true,reference:bookingId,notification:'pending'})
+  // Save the booking first, then deliver independently to the office and customer.
+  // A failed email never rolls back an accepted enquiry.
+  const messages=[
+    {recipient:process.env.BOOKING_TO_EMAIL!, content:adminBooking(bookingId,fields),replyTo:email,kind:'admin'},
+    {recipient:email, content:customerReceipt(safeText(payload.name),bookingId,fields.filter(([k])=>['Address','Postcode','Preferred date','Preferred time','Package'].includes(k))),replyTo:process.env.BOOKING_FROM_EMAIL!,kind:'customer'},
+  ]
+  let failures=0
+  for(const message of messages){
+    try {
+      const response=await fetch('https://api.resend.com/emails',{
+        method:'POST',
+        headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':`movein-${bookingId}-${message.kind}-v1`},
+        signal:AbortSignal.timeout(8000),
+        body:JSON.stringify({
+          from:process.env.BOOKING_FROM_EMAIL,
+          to:[message.recipient],
+          reply_to:message.replyTo,
+          subject:message.content.subject,
+          html:message.content.html,
+          text:message.content.text,
+        }),
+      })
+      if(!response.ok)throw Error('Resend rejected email '+response.status)
+      const receipt=await response.json() as {id?:string}
+      await updateDelivery(bookingId,'sent',message.recipient,receipt.id)
+    }catch(err){
+      failures++
+      console.error('Transactional email delivery failed',message.kind,err instanceof Error?err.name:'unknown')
+      await updateDelivery(bookingId,'failed',message.recipient)
     }
-    const receipt = await response.json().catch(() => ({})) as {id?:string}
-    await updateDelivery(bookingId,'sent',process.env.BOOKING_TO_EMAIL!,receipt.id)
-    return res.status(200).json({ok:true,reference:bookingId})
-  } catch (err) { console.error('Booking delivery unavailable',err instanceof Error ? err.name : 'unknown'); await updateDelivery(bookingId,'failed',process.env.BOOKING_TO_EMAIL!); return res.status(202).json({ok:true,reference:bookingId,notification:'pending'}) }
+  }
+  return res.status(failures?202:200).json({ok:true,reference:bookingId,...(failures?{notification:'pending'}:{})})
 }
