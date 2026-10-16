@@ -58,6 +58,11 @@ export async function staffRequest(path: string, options: RequestInit = {}) {
     ...options,headers:{apikey:key,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',...options.headers},
   })
   if (!r.ok) { const e=await r.json().catch(()=>({}));throw Error(e.message||e.error||'Request failed') }
-  if (r.status === 204) return null
-  return r.json()
+  // PostgREST often returns 201/200 with an empty body for writes using Prefer: return=minimal.
+  // Treat that as success rather than attempting to parse non-existent JSON.
+  if (r.status === 204 || r.status === 205) return null
+  const body = await r.text()
+  if (!body.trim()) return null
+  try { return JSON.parse(body) }
+  catch { throw Error('The server returned an invalid response. Please refresh and check the job status.') }
 }
