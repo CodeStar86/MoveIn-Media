@@ -8,7 +8,7 @@ const choices: Record<string, string[]> = {
   propertyType: ['Flat','House','Maisonette','Commercial / other'],
   purpose: ['New listing','Refresh existing listing','Rental or Airbnb'],
   time: ['Morning','Afternoon','Flexible'],
-  package: ['All-Inclusive Property Marketing — £299 standard','Not sure — please advise'],
+  package: ['All-Inclusive Property Marketing — £199 standard','Not sure — please advise'],
 }
 const safeText = (value: unknown) => typeof value === 'string' ? value.trim() : ''
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] ?? c))
