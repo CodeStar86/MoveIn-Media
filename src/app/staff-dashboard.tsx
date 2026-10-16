@@ -30,6 +30,8 @@ export function StaffDashboard() {
  const [descriptions,setDescriptions]=useState<Record<string,string>>({})
  const [uploads,setUploads]=useState<Record<string,File|null>>({})
  const [newPassword,setNewPassword]=useState("")
+ const [prices,setPrices]=useState<Record<string,string>>({})
+ const [billing,setBilling]=useState<{booking_id:string;amount_pence:number|null;billing_mode:string;payment_status:string}[]>([])
  const load=async()=>{
    try {
      const me=await staffRequest("staff_profiles?select=*&user_id=eq."+encodeURIComponent((await getUserId())))
@@ -42,7 +44,7 @@ export function StaffDashboard() {
        p.role==="admin"?staffRequest("staff_profiles?select=*&order=full_name.asc"):Promise.resolve([p]),
      ])
      setBookings(b as Booking[]);setJobs(j as Assignment[]);setStaff(s as Profile[])
-     if(p.role==="admin")setAgents(await staffRequest("agent_profiles?select=user_id,full_name,agency_name,approval_status&order=created_at.desc") as typeof agents)
+     if(p.role==="admin"){setAgents(await staffRequest("agent_profiles?select=user_id,full_name,agency_name,approval_status&order=created_at.desc") as typeof agents);setBilling(await staffRequest("booking_billing?select=booking_id,amount_pence,billing_mode,payment_status") as typeof billing)}
    }catch(e){setError((e as Error).message);setProfile(null)}
    finally{setLoaded(true)}
  }
@@ -74,6 +76,13 @@ export function StaffDashboard() {
   setNewName("");setNewEmail("");setNewPhone("")
  },"Photographer invitation sent")}
  const approve=(userId:string,approved:boolean)=>run(()=>staffRequest("rpc/movein_approve_agent",{method:"POST",body:JSON.stringify({p_user_id:userId,p_approve:approved})}),approved?"Agent approved":"Agent declined")
+ const savePrice=(bookingId:string)=>run(()=>staffRequest("rpc/movein_admin_price_booking",{method:"POST",body:JSON.stringify({p_booking:bookingId,p_amount_pence:Math.round(Number(prices[bookingId])*100)})}),"Booking price updated")
+ const createInvoice=async(agentId:string)=>{
+  const session=getSession();if(!session)throw Error("Sign in required")
+  const r=await fetch("/api/admin/monthly-invoice",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({agentId})})
+  const data=await r.json().catch(()=>({})) as {error?:string;count?:number}
+  if(!r.ok)throw Error(data.error||"Invoice failed")
+ }
  const publish=async(bookingId:string)=>{
    const file=uploads[bookingId];let path:string|null=null
    if(file){if(!file.name.toLowerCase().endsWith(".zip")||file.size>200*1024*1024)throw Error("Choose a ZIP no larger than 200 MB")
@@ -98,7 +107,7 @@ export function StaffDashboard() {
   </div>:null}
    {profile?<div className="agent-workspace"><div className="workspace-heading"><div><div className="workspace-eyebrow">MOVEIN MEDIA OPERATIONS</div><h1>{profile.role==="admin"?"Your administration hub.":"Your photography jobs."}</h1><p>{profile.role==="admin"?"Review agent accounts, allocate shoots and oversee your team.":"Manage your assigned shoots and deliver finished property media."}</p></div><button className="workspace-signout" onClick={()=>{saveSession(null);setProfile(null);setError("");setJobs([]);setBookings([])}}>Sign out ↗</button></div><div className="workspace-stats"><div><span>Signed in as</span><strong>{profile.full_name}</strong></div><div><span>Bookings</span><strong>{bookings.length}</strong></div><div><span>{profile.role==="admin"?"To allocate":"My assignments"}</span><strong>{profile.role==="admin"?bookings.filter(b=>!jobs.some(j=>j.booking_id===b.id)).length:jobs.filter(j=>j.photographer_id===profile.user_id).length}</strong></div></div><div className="staff-workspace-grid"><div className="staff-workspace-main"><section className="workspace-card"><div className="workspace-section-kicker">SECURITY</div><h2>Account security</h2><form onSubmit={e=>{e.preventDefault();void run(()=>setStaffPassword(newPassword),"Password updated")}} style={{display:"flex",gap:10,flexWrap:"wrap"}}><input style={{...field,maxWidth:280}} type="password" autoComplete="new-password" minLength={12} required aria-label="New password" placeholder="Set or change password (12+ characters)" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><button style={action} disabled={busy}>Save password</button></form></section>
    {profile.role==="admin"?<>
-    <section className="workspace-card"><div className="workspace-section-kicker">ACCESS MANAGEMENT</div><h2>Agent approvals</h2>{agents.length===0?<p>No agent registrations yet.</p>:agents.map(a=><div key={a.user_id} style={{borderTop:"1px solid #ddd",padding:"12px 0"}}><strong>{a.full_name}</strong> · {a.agency_name} · {a.approval_status} {a.approval_status!=="approved"&&<button style={{...action,marginLeft:12}} disabled={busy} onClick={()=>void approve(a.user_id,true)}>Approve</button>}{a.approval_status==="pending"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void approve(a.user_id,false)}>Reject</button>}</div>)}</section>
+    <section className="workspace-card"><div className="workspace-section-kicker">ACCESS MANAGEMENT</div><h2>Agent approvals</h2>{agents.length===0?<p>No agent registrations yet.</p>:agents.map(a=><div key={a.user_id} style={{borderTop:"1px solid #ddd",padding:"12px 0"}}><strong>{a.full_name}</strong> · {a.agency_name} · {a.approval_status} {a.approval_status==="approved"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void run(()=>createInvoice(a.user_id),"Monthly invoice sent")}>Send monthly invoice</button>} {a.approval_status!=="approved"&&<button style={{...action,marginLeft:12}} disabled={busy} onClick={()=>void approve(a.user_id,true)}>Approve</button>}{a.approval_status==="pending"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void approve(a.user_id,false)}>Reject</button>}</div>)}</section>
     <section className="workspace-card"><div className="workspace-section-kicker">AT A GLANCE</div><h2>Overview</h2><p>{bookings.length} bookings · {bookings.filter(b=>!jobs.some(j=>j.booking_id===b.id)).length} unallocated · {staff.filter(p=>p.role==="photographer"&&p.active).length} active photographers</p></section>
     <section className="workspace-card"><div className="workspace-section-kicker">TEAM MANAGEMENT</div><h2>Add photographer</h2><p>Send a secure account invitation by email. Only the administrator can create photographers.</p>
      <form onSubmit={invite} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10}}>
@@ -123,6 +132,7 @@ export function StaffDashboard() {
        </div><div><strong>{j?.status||"Unallocated"}</strong><div style={{fontSize:13}}>Scheduled: {date(j?.scheduled_at||null)}</div></div>
       </div>
       {profile.role==="photographer"&&j&&<section className="photographer-delivery"><h4>Send completed media to the agent</h4><p className="photographer-delivery-help">Upload the final photo ZIP and add the property description. Both will appear on the agent dashboard when you publish.</p><label className="photographer-upload-label" htmlFor={"photos-"+b.id}><span className="photographer-upload-icon">↑</span><strong>Choose photo ZIP</strong><span>Click to select your ZIP file · up to 200 MB</span><input id={"photos-"+b.id} type="file" accept=".zip,application/zip,application/x-zip-compressed" onChange={e=>setUploads(old=>({...old,[b.id]:e.target.files?.[0]||null}))}/></label>{uploads[b.id]&&<p className="photographer-file-selected">✓ Selected: {uploads[b.id]!.name} ({(uploads[b.id]!.size/1024/1024).toFixed(1)} MB)</p>}<label className="photographer-description-label">Property description</label><textarea style={{...field,marginTop:10}} rows={7} placeholder="Property description for the agent to copy" value={descriptions[b.id]||""} onChange={e=>setDescriptions(old=>({...old,[b.id]:e.target.value}))}/><div className="photographer-delivery-footer"><button className="photographer-primary-btn" disabled={busy||(!uploads[b.id]&&!descriptions[b.id]?.trim())} onClick={()=>void run(()=>publish(b.id),"Deliverables sent to agent dashboard")}>Upload & publish to agent</button></div></section>}
+      {profile.role==="admin"&&<div style={{padding:"14px 0"}}><strong>Booking price & payment</strong><p>{billing.find(x=>x.booking_id===b.id)?.amount_pence!=null?"£"+(billing.find(x=>x.booking_id===b.id)!.amount_pence!/100).toFixed(2):"Price not set"} · {billing.find(x=>x.booking_id===b.id)?.payment_status||"Unpriced"} · {billing.find(x=>x.booking_id===b.id)?.billing_mode||"Per booking"}</p><label>Final price (£)<input type="number" min="1" max="1000000" step="0.01" style={{...field,maxWidth:190,margin:"6px 8px 6px 0"}} value={prices[b.id]??""} onChange={e=>setPrices(v=>({...v,[b.id]:e.target.value}))}/></label><button style={action} type="button" disabled={busy||!Number.isFinite(Number(prices[b.id]))||Number(prices[b.id])<1} onClick={()=>void savePrice(b.id)}>Save final price</button></div>}
       {profile.role==="admin"?<label>Assign photographer
         <select style={{...field,maxWidth:350,margin:"6px 0"}} disabled={busy} value={j?.photographer_id||""} onChange={e=>void assign(b.id,e.target.value)}>
          <option value="">Select photographer</option>
