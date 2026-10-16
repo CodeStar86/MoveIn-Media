@@ -19,7 +19,7 @@ export const images = {
 export const packages = [
   {
     name: "All-Inclusive Property Marketing",
-    price: "£299",
+    price: "£199",
     note: "One complete service for a standard residential property. Regular estate agent partners benefit from monthly volume rates.",
     details: [
       "Professional on-site property photography and edited listing-ready images",
@@ -34,10 +34,10 @@ export const packages = [
 ]
 
 export const agencyRates = [
-  { appointments: "1–2", price: "£299" },
-  { appointments: "3–5", price: "£279" },
-  { appointments: "6–9", price: "£269" },
-  { appointments: "10+", price: "£259" },
+  { appointments: "1–2", price: "£199" },
+  { appointments: "3–5", price: "£189" },
+  { appointments: "6–9", price: "£179" },
+  { appointments: "10+", price: "£169" },
 ]
 
 export const included = [
