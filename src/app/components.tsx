@@ -420,14 +420,16 @@ function TurnstileWidget() {
 export function BookingForm() {
   const [status, setStatus] =
     useState<"idle" | "sending" | "success" | "error">("idle")
+  const [submitError, setSubmitError] = useState("")
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (status === "sending") return
     setStatus("sending")
+    setSubmitError("")
     const form = event.currentTarget
     const body = Object.fromEntries(new FormData(form))
     const token = String(body['cf-turnstile-response'] ?? '')
-    if (!token) { setStatus('error'); return }
+    if (!token) { setSubmitError('Please complete the security check and try again.'); setStatus('error'); return }
     delete body['cf-turnstile-response']
     body.turnstileToken = token
     try {
@@ -436,10 +438,14 @@ export function BookingForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
-      if (!response.ok) throw new Error("Unable to send")
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({})) as {error?: string}
+        throw new Error(data.error || `The booking service returned an error (${response.status}).`)
+      }
       setStatus("success")
       form.reset()
-    } catch {
+    } catch (cause) {
+      setSubmitError(cause instanceof Error ? cause.message : "Unable to submit booking right now.")
       setStatus("error")
       const turnstile = (window as Window & { turnstile?: { reset: () => void } }).turnstile
       turnstile?.reset()
@@ -589,8 +595,7 @@ export function BookingForm() {
       </button>
       {status === "error" && (
         <p className="form-error">
-          We couldn’t send this request. Please email hello@movein-media.co.uk
-          and we’ll help directly.
+          {submitError || "We couldn’t send this request."} Please email hello@movein-media.co.uk if the issue continues.
         </p>
       )}
       <p className="form-note">
