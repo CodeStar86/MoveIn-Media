@@ -60,3 +60,15 @@
 .photographer-upload-label input[type=file]{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden;clip-path:inset(50%);pointer-events:none}
 .photographer-file-selected{padding:10px 12px;background:#e8f6ed;color:#205b40;border-radius:8px;font-size:13px;overflow-wrap:anywhere;margin:12px 0}
 .photographer-description-label{display:block;margin:20px 0 4px!important;font-weight:650;font-size:13px}
+
+
+.workspace-deliveries{border-color:#bbdac9;background:linear-gradient(180deg,#fafffb,#fff)}
+.workspace-delivery-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.workspace-delivery-heading h2{margin-bottom:14px}
+.workspace-refresh{border:1px solid #bdd4c6;background:white;color:#17483e;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:650;cursor:pointer}
+.workspace-delivery-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0}
+.workspace-delivery-actions .agent-submit{margin:0;width:auto;padding:12px 18px}
+.workspace-remove{background:#fff;color:#914339;border:1px solid #ead2cd;border-radius:8px;padding:10px 13px;cursor:pointer}
+.workspace-description{padding:17px;background:#f1f7f3;border-radius:10px;margin-top:14px}
+.workspace-description h3{font-size:15px;margin:0 0 9px;color:#184b39}
+.workspace-description p{font-size:14px;white-space:pre-wrap;color:#35584a;line-height:1.65}
