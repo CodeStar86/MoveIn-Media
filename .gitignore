@@ -1,0 +1,25 @@
+# Dependencies / build
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+*.tsbuildinfo
+
+# Secrets: share example only
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Local tooling / logs
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.vercel/
+.tmp-*/

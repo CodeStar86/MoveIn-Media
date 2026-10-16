@@ -1,0 +1,6 @@
+# Keep text files consistent across platforms
+* text=auto
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
