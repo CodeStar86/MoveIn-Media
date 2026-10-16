@@ -23,7 +23,7 @@ export function AgentPortal(){
  const register=async(e:FormEvent)=>{e.preventDefault();setBusy(true);setError("");try{
  if(password.length<12)throw Error("Choose a password of at least 12 characters.")
  if(!configUrl||!configKey)throw Error("Registration is not configured.")
- const response=await fetch(configUrl+"/auth/v1/signup",{method:"POST",headers:{apikey:configKey,"Content-Type":"application/json"},body:JSON.stringify({email,password,options:{emailRedirectTo:location.origin+"/agent"},data:{full_name:name,agency_name:agency,phone,account_type:"agent"}})})
+ const response=await fetch(configUrl+"/auth/v1/signup?redirect_to="+encodeURIComponent(location.origin+"/agent"),{method:"POST",headers:{apikey:configKey,"Content-Type":"application/json"},body:JSON.stringify({email,password,data:{full_name:name,agency_name:agency,phone,account_type:"agent"}})})
  const data=await response.json();if(!response.ok)throw Error(data.msg||data.error_description||data.message||"Registration failed")
  if(data.access_token&&data.refresh_token){saveSession({access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Date.now()+(data.expires_in||3600)*1000});await staffRequest("rpc/movein_register_agent",{method:"POST",body:JSON.stringify({p_name:name,p_agency:agency,p_phone:phone})});await load()}
  setNotice("Registration received. Confirm your email, then sign in. Your administrator must approve your account before you can book.")
