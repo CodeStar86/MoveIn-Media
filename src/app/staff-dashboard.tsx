@@ -122,14 +122,14 @@ export function StaffDashboard() {
         {b.instructions?<p>Instructions: {b.instructions}</p>:null}
        </div><div><strong>{j?.status||"Unallocated"}</strong><div style={{fontSize:13}}>Scheduled: {date(j?.scheduled_at||null)}</div></div>
       </div>
-      {profile.role==="photographer"&&j&&<section style={{marginTop:12}}><h4>Deliver photos and property description</h4><label>Photo ZIP (maximum 200 MB)<input type="file" accept=".zip,application/zip" onChange={e=>setUploads(old=>({...old,[b.id]:e.target.files?.[0]||null}))}/></label><textarea style={{...field,marginTop:10}} rows={7} placeholder="Property description for the agent to copy" value={descriptions[b.id]||""} onChange={e=>setDescriptions(old=>({...old,[b.id]:e.target.value}))}/><button style={action} disabled={busy} onClick={()=>void run(()=>publish(b.id),"Deliverables sent to agent dashboard")}>Publish to agent</button></section>}
+      {profile.role==="photographer"&&j&&<section className="photographer-delivery"><h4>Deliver photos and property description</h4><label>Photo ZIP (maximum 200 MB)<input type="file" accept=".zip,application/zip" onChange={e=>setUploads(old=>({...old,[b.id]:e.target.files?.[0]||null}))}/></label><textarea style={{...field,marginTop:10}} rows={7} placeholder="Property description for the agent to copy" value={descriptions[b.id]||""} onChange={e=>setDescriptions(old=>({...old,[b.id]:e.target.value}))}/><div className="photographer-delivery-footer"><button className="photographer-primary-btn" disabled={busy} onClick={()=>void run(()=>publish(b.id),"Deliverables sent to agent dashboard")}>Publish to agent</button></div></section>}
       {profile.role==="admin"?<label>Assign photographer
         <select style={{...field,maxWidth:350,margin:"6px 0"}} disabled={busy} value={j?.photographer_id||""} onChange={e=>void assign(b.id,e.target.value)}>
          <option value="">Select photographer</option>
          {staff.filter(p=>p.role==="photographer"&&p.active).map(p=><option key={p.user_id} value={p.user_id}>{p.full_name}</option>)}
         </select>
-      </label>:j?<div style={{display:"flex",gap:9,flexWrap:"wrap"}}>
-        {(j.status==="assigned"?["accepted","declined"]:j.status==="accepted"?["in_progress"]:j.status==="in_progress"?["completed"]:[]).map(s=><button style={action} disabled={busy} key={s} onClick={()=>void updateJob(j,s)}>{s.replace("_"," ")}</button>)}
+      </label>:j?<div className="photographer-status-actions">
+        {(j.status==="assigned"?["accepted","declined"]:j.status==="accepted"?["in_progress"]:j.status==="in_progress"?["completed"]:[]).map(s=><button className={s==="declined"?"photographer-status-btn photographer-status-btn--decline":"photographer-status-btn"} disabled={busy} key={s} onClick={()=>void updateJob(j,s)}>{({accepted:"Accept job",declined:"Decline job",in_progress:"Start job",completed:"Mark completed"} as Record<string,string>)[s]||s}</button>)}
       </div>:null}
      </article>
     })}
