@@ -42,7 +42,8 @@ export function AgentPortal(){
    })
    const data=await r.json().catch(()=>({})) as {signedURL?:string;signedUrl?:string;error?:string;message?:string}
    if(!r.ok||!(data.signedURL||data.signedUrl))throw Error(data.message||data.error||"Could not prepare ZIP download ("+r.status+")")
-   const signed=new URL(data.signedURL||data.signedUrl!,configUrl+"/storage/v1/").toString()
+   const signedPath=(data.signedURL||data.signedUrl!).replace(/^\/+/, "")
+   const signed=signedPath.startsWith("https://")?signedPath:new URL(signedPath,configUrl+"/storage/v1/").toString()
    setDownloadLinks(old=>({...old,[bookingId]:signed}))
    setNotice("Your secure ZIP link is ready. Select Save ZIP below; the link expires in 10 minutes.")
   }catch(e){setError((e as Error).message)}finally{setBusy(false)}
