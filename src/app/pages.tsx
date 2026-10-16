@@ -1,3 +1,5 @@
+declare const __MOVEIN_PUBLIC_SUPABASE_URL__: string
+declare const __MOVEIN_PUBLIC_SUPABASE_KEY__: string
 import { useState, type FormEvent } from "react"
 import {
   Aperture,
