@@ -36,14 +36,10 @@ export function AgentPortal(){
   setBusy(true);setError("");setNotice("")
   try{
    const session=getSession();if(!session)throw Error("Please sign in again")
-   const r=await fetch(configUrl+"/storage/v1/object/sign/property-deliverables/"+path.split("/").map(encodeURIComponent).join("/"),{
-     method:"POST",headers:{apikey:configKey,Authorization:"Bearer "+session.access_token,"Content-Type":"application/json"},
-     body:JSON.stringify({expiresIn:600,download:"MoveIn-Media-"+bookingId+".zip"})
-   })
-   const data=await r.json().catch(()=>({})) as {signedURL?:string;signedUrl?:string;error?:string;message?:string}
-   if(!r.ok||!(data.signedURL||data.signedUrl))throw Error(data.message||data.error||"Could not prepare ZIP download ("+r.status+")")
-   const signedPath=(data.signedURL||data.signedUrl!).replace(/^\/+/, "")
-   const signed=signedPath.startsWith("https://")?signedPath:new URL(signedPath,configUrl+"/storage/v1/").toString()
+   const r=await fetch("/api/agent/download",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({bookingId})})
+   const data=await r.json().catch(()=>({})) as {url?:string;error?:string}
+   if(!r.ok||!data.url)throw Error(data.error||"Could not prepare ZIP download")
+   const signed=data.url
    setDownloadLinks(old=>({...old,[bookingId]:signed}))
    setNotice("Your secure ZIP link is ready. Select Save ZIP below; the link expires in 10 minutes.")
   }catch(e){setError((e as Error).message)}finally{setBusy(false)}
