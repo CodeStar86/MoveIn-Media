@@ -31,7 +31,7 @@ export function StaffDashboard() {
  const [uploads,setUploads]=useState<Record<string,File|null>>({})
  const [newPassword,setNewPassword]=useState("")
  const [prices,setPrices]=useState<Record<string,string>>({})
- const [billing,setBilling]=useState<{booking_id:string;amount_pence:number|null;billing_mode:string;payment_status:string}[]>([])
+ const [billing,setBilling]=useState<{booking_id:string;amount_pence:number|null;billing_mode:string;payment_status:string;admin_confirmed_at:string|null;confirmation_emailed_at:string|null}[]>([])
  const load=async()=>{
    try {
      const me=await staffRequest("staff_profiles?select=*&user_id=eq."+encodeURIComponent((await getUserId())))
@@ -44,7 +44,7 @@ export function StaffDashboard() {
        p.role==="admin"?staffRequest("staff_profiles?select=*&order=full_name.asc"):Promise.resolve([p]),
      ])
      setBookings(b as Booking[]);setJobs(j as Assignment[]);setStaff(s as Profile[])
-     if(p.role==="admin"){setAgents(await staffRequest("agent_profiles?select=user_id,full_name,agency_name,approval_status&order=created_at.desc") as typeof agents);setBilling(await staffRequest("booking_billing?select=booking_id,amount_pence,billing_mode,payment_status") as typeof billing)}
+     if(p.role==="admin"){setAgents(await staffRequest("agent_profiles?select=user_id,full_name,agency_name,approval_status&order=created_at.desc") as typeof agents);setBilling(await staffRequest("booking_billing?select=booking_id,amount_pence,billing_mode,payment_status,admin_confirmed_at,confirmation_emailed_at") as typeof billing)}
    }catch(e){setError((e as Error).message);setProfile(null)}
    finally{setLoaded(true)}
  }
@@ -77,6 +77,12 @@ export function StaffDashboard() {
  },"Photographer invitation sent")}
  const approve=(userId:string,approved:boolean)=>run(()=>staffRequest("rpc/movein_approve_agent",{method:"POST",body:JSON.stringify({p_user_id:userId,p_approve:approved})}),approved?"Agent approved":"Agent declined")
  const savePrice=(bookingId:string)=>run(()=>staffRequest("rpc/movein_admin_price_booking",{method:"POST",body:JSON.stringify({p_booking:bookingId,p_amount_pence:Math.round(Number(prices[bookingId])*100)})}),"Booking price updated")
+ const confirmPayment=async(bookingId:string)=>{
+  const session=getSession();if(!session)throw Error("Please sign in")
+  const r=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/functions/v1/confirm-payment",{method:"POST",headers:{"Content-Type":"application/json",apikey:__MOVEIN_PUBLIC_SUPABASE_KEY__,Authorization:"Bearer "+session.access_token},body:JSON.stringify({bookingId})})
+  const data=await r.json().catch(()=>({})) as {error?:string}
+  if(!r.ok)throw Error(data.error||"Could not confirm payment")
+ }
  const createInvoice=async(agentId:string)=>{
   const session=getSession();if(!session)throw Error("Sign in required")
   const r=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/functions/v1/stripe-billing?action=monthly-invoice",{method:"POST",headers:{"Content-Type":"application/json",apikey:__MOVEIN_PUBLIC_SUPABASE_KEY__,Authorization:"Bearer "+session.access_token},body:JSON.stringify({agentId})})
@@ -132,7 +138,7 @@ export function StaffDashboard() {
        </div><div><strong>{j?.status||"Unallocated"}</strong><div style={{fontSize:13}}>Scheduled: {date(j?.scheduled_at||null)}</div></div>
       </div>
       {profile.role==="photographer"&&j&&<section className="photographer-delivery"><h4>Send completed media to the agent</h4><p className="photographer-delivery-help">Upload the final photo ZIP and add the property description. Both will appear on the agent dashboard when you publish.</p><label className="photographer-upload-label" htmlFor={"photos-"+b.id}><span className="photographer-upload-icon">↑</span><strong>Choose photo ZIP</strong><span>Click to select your ZIP file · up to 200 MB</span><input id={"photos-"+b.id} type="file" accept=".zip,application/zip,application/x-zip-compressed" onChange={e=>setUploads(old=>({...old,[b.id]:e.target.files?.[0]||null}))}/></label>{uploads[b.id]&&<p className="photographer-file-selected">✓ Selected: {uploads[b.id]!.name} ({(uploads[b.id]!.size/1024/1024).toFixed(1)} MB)</p>}<label className="photographer-description-label">Property description</label><textarea style={{...field,marginTop:10}} rows={7} placeholder="Property description for the agent to copy" value={descriptions[b.id]||""} onChange={e=>setDescriptions(old=>({...old,[b.id]:e.target.value}))}/><div className="photographer-delivery-footer"><button className="photographer-primary-btn" disabled={busy||(!uploads[b.id]&&!descriptions[b.id]?.trim())} onClick={()=>void run(()=>publish(b.id),"Deliverables sent to agent dashboard")}>Upload & publish to agent</button></div></section>}
-      {profile.role==="admin"&&<div style={{padding:"14px 0"}}><strong>Booking price & payment</strong><p>{billing.find(x=>x.booking_id===b.id)?.amount_pence!=null?"£"+(billing.find(x=>x.booking_id===b.id)!.amount_pence!/100).toFixed(2):"Price not set"} · {billing.find(x=>x.booking_id===b.id)?.payment_status||"Unpriced"} · {billing.find(x=>x.booking_id===b.id)?.billing_mode||"Per booking"}</p><label>Final price (£)<input type="number" min="1" max="1000000" step="0.01" style={{...field,maxWidth:190,margin:"6px 8px 6px 0"}} value={prices[b.id]??""} onChange={e=>setPrices(v=>({...v,[b.id]:e.target.value}))}/></label><button style={action} type="button" disabled={busy||!Number.isFinite(Number(prices[b.id]))||Number(prices[b.id])<1} onClick={()=>void savePrice(b.id)}>Save final price</button></div>}
+      {profile.role==="admin"&&<div style={{padding:"14px 0"}}><strong>Booking price & payment</strong><p>{billing.find(x=>x.booking_id===b.id)?.amount_pence!=null?"£"+(billing.find(x=>x.booking_id===b.id)!.amount_pence!/100).toFixed(2):"Price not set"} · {billing.find(x=>x.booking_id===b.id)?.payment_status||"Unpriced"} · {billing.find(x=>x.booking_id===b.id)?.billing_mode||"Per booking"}</p>{billing.find(x=>x.booking_id===b.id)?.payment_status==="paid"&&<div style={{margin:"12px 0"}}>{billing.find(x=>x.booking_id===b.id)?.admin_confirmed_at?<p>✓ Administrator confirmed {billing.find(x=>x.booking_id===b.id)?.confirmation_emailed_at?"· Agent emailed":"· Email pending"}</p>:<button style={action} disabled={busy} onClick={()=>void run(()=>confirmPayment(b.id),"Payment confirmed and agent notified")}>Confirm received payment & notify agent</button>}</div>}<label>Final price (£)<input type="number" min="1" max="1000000" step="0.01" style={{...field,maxWidth:190,margin:"6px 8px 6px 0"}} value={prices[b.id]??""} onChange={e=>setPrices(v=>({...v,[b.id]:e.target.value}))}/></label><button style={action} type="button" disabled={busy||!Number.isFinite(Number(prices[b.id]))||Number(prices[b.id])<1} onClick={()=>void savePrice(b.id)}>Save final price</button></div>}
       {profile.role==="admin"?<label>Assign photographer
         <select style={{...field,maxWidth:350,margin:"6px 0"}} disabled={busy} value={j?.photographer_id||""} onChange={e=>void assign(b.id,e.target.value)}>
          <option value="">Select photographer</option>
