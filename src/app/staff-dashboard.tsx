@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react"
-import { getSession, saveSession, staffAuth, staffRequest } from "./staff-api"
+import { getSession, saveSession, staffAuth, staffRequest, recoverInviteSession, setStaffPassword } from "./staff-api"
 
 type Profile = {user_id:string;full_name:string;role:"admin"|"photographer";active:boolean;phone:string|null}
 type Booking = {id:string;status:string;preferred_date:string;preferred_time:string;package_selection:string;purpose:string;instructions:string|null;customers:{full_name:string;email:string;phone:string}|null;properties:{address:string;postcode:string}|null}
@@ -22,6 +22,7 @@ export function StaffDashboard() {
  const [newEmail,setNewEmail]=useState("")
  const [newPhone,setNewPhone]=useState("")
  const [notice,setNotice]=useState("")
+ const [newPassword,setNewPassword]=useState("")
  const load=async()=>{
    try {
      const me=await staffRequest("staff_profiles?select=*&user_id=eq."+encodeURIComponent((await getUserId())))
@@ -46,7 +47,7 @@ export function StaffDashboard() {
    const payload=JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")))
    return payload.sub as string
  }
- useEffect(()=>{if(getSession())void load();else setLoaded(true)},[])
+ useEffect(()=>{recoverInviteSession();if(getSession())void load();else setLoaded(true)},[])
  const login=async(e:FormEvent)=>{e.preventDefault();setBusy(true);setError("");try{await staffAuth(email,password);await load()}catch(err){setError((err as Error).message)}finally{setBusy(false)}}
  const run=async(task:()=>Promise<unknown>,success:string)=>{setBusy(true);setError("");setNotice("");try{await task();setNotice(success);await load()}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
  const assign=(bookingId:string,photographerId:string)=>{
@@ -77,7 +78,7 @@ export function StaffDashboard() {
     <label>Password<input style={field} type="password" required autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
     <button style={{...action,marginTop:18}} disabled={busy}>Sign in</button>
    </form>:null}
-   {profile?<><div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:20}}>
+   {profile?<><section style={card}><h2>Account security</h2><form onSubmit={e=>{e.preventDefault();void run(()=>setStaffPassword(newPassword),"Password updated")}} style={{display:"flex",gap:10,flexWrap:"wrap"}}><input style={{...field,maxWidth:280}} type="password" autoComplete="new-password" minLength={12} required aria-label="New password" placeholder="Set or change password (12+ characters)" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><button style={action} disabled={busy}>Save password</button></form></section><div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:20}}>
     <div>Signed in as <strong>{profile.full_name}</strong> · {profile.role}</div>
     <button style={action} onClick={()=>{saveSession(null);setProfile(null);setError("");setJobs([]);setBookings([])}}>Sign out</button>
    </div>
