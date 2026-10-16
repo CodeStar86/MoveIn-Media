@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router"
 import { Layout } from "./components"
 import { StaffDashboard } from "./staff-dashboard"
+import { AgentPortal } from "./agent-portal"
 import {
   About,
   BeforeAfterPage,
@@ -20,6 +21,7 @@ import {
 
 export const router = createBrowserRouter([
   { path: "/staff", Component: StaffDashboard },
+  { path: "/agent", Component: AgentPortal },
   {
     path: "/",
     Component: Layout,
