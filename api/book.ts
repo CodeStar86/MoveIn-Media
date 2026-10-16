@@ -1,4 +1,4 @@
-import { adminBooking, customerReceipt } from './email-templates'
+import { adminBooking, customerReceipt } from './email-templates.ts'
 /** Booking enquiry endpoint. Requires Supabase, Cloudflare Turnstile and Resend configuration in production. */
 type RequestLike = { method?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
 type ResponseLike = { status: (code: number) => ResponseLike; json: (body: unknown) => void; setHeader: (name: string, value: string) => void }
