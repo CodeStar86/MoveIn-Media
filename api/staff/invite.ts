@@ -26,7 +26,7 @@ export default async function handler(req:Req,res:Res){
   if(name.length<2||name.length>120||!/^\S+@\S+\.\S+$/.test(email)||email.length>254||phone.length>40)return res.status(400).json({error:'Invalid photographer details'})
   const origin=process.env.BOOKING_ALLOWED_ORIGIN
   if(!origin)return res.status(503).json({error:'Website origin is not configured'})
-  const invite=await fetch(url+'/auth/v1/invite',{method:'POST',headers:serviceHeaders,body:JSON.stringify({email,data:{full_name:name},redirect_to:origin+'/staff'})})
+  const invite=await fetch(url+'/auth/v1/invite?redirect_to='+encodeURIComponent(origin+'/staff'),{method:'POST',headers:serviceHeaders,body:JSON.stringify({email,data:{full_name:name}})})
   const invited=await invite.json() as {id?:string;msg?:string;message?:string}
   if(!invite.ok||!invited.id)return res.status(400).json({error:invited.msg||invited.message||'Could not invite photographer'})
   const saved=await fetch(url+'/rest/v1/staff_profiles',{method:'POST',headers:{...serviceHeaders,Prefer:'return=minimal'},body:JSON.stringify({user_id:invited.id,full_name:name,role:'photographer',phone:phone||null,active:true})})
