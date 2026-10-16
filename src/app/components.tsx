@@ -189,8 +189,8 @@ export function Footer() {
         </div>
         <div>
           <span className="footer__label">Start a booking</span>
-          <a href="mailto:hello@movein-media.co.uk">
-            <Mail size={16} /> hello@movein-media.co.uk
+          <a href="/contact">
+            <Mail size={16} /> Send a message
           </a>
           <p>
             N, NW & EN postcodes
