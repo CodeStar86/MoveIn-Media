@@ -696,37 +696,23 @@ export function Booking() {
   return (
     <>
       <Seo
-        title="Book a Property Photography Request"
-        description="Request a MoveIn Media property photography booking in North London."
+        title="Book Property Photography | Agent Account Required"
+        description="Register or sign in to your MoveIn Media estate agent account to request property photography. New agent accounts require administrator approval."
       />
       <PageHero
-        eyebrow="Booking request"
-        title="Tell us about your property."
-        text="Share the details below and we’ll respond to confirm availability, the appropriate scope and final price. No payment or account is required."
+        eyebrow="Agent bookings"
+        title="Your bookings, all in one place."
+        text="Create a free estate agent account to manage property photography bookings, see progress and download completed photos. New accounts are reviewed by our administrator before booking access is enabled."
       />
-      <section className="booking-layout">
-        <aside>
-          <h3>What happens next?</h3>
-          <ol>
-            <li>
-              <span>1</span>We review your property and preferred date.
-            </li>
-            <li>
-              <span>2</span>We confirm availability, scope and final price.
-            </li>
-            <li>
-              <span>3</span>Your appointment is secured once you accept.
-            </li>
-          </ol>
-          <p>
-            <Mail size={16} /> Prefer email?
-            <br />
-            <a href="mailto:hello@movein-media.co.uk">
-              hello@movein-media.co.uk
-            </a>
-          </p>
-        </aside>
-        <BookingForm />
+      <section className="section">
+        <div className="agency-cta">
+          <Eyebrow>First time here?</Eyebrow>
+          <h2>Register your agency before booking</h2>
+          <p>Register with your name, agency, email and password. Confirm your email, then wait for approval. Once approved, you can submit booking requests from your own dashboard.</p>
+          <ButtonLink to="/agent">Register or sign in to book</ButtonLink>
+          <p>Already approved? Sign in to the same agent portal to manage bookings and download completed property media.</p>
+          <p>Need assistance? <a href="mailto:hello@movein-media.co.uk">hello@movein-media.co.uk</a></p>
+        </div>
       </section>
     </>
   )
