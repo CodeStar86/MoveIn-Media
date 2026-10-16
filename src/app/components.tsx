@@ -561,7 +561,7 @@ export function BookingForm() {
             <option value="" disabled>
               Select service
             </option>
-            <option value="All-Inclusive Property Marketing — £299 standard">All-Inclusive Property Marketing — £299 standard (agency rates subject to monthly volume)</option>
+            <option value="All-Inclusive Property Marketing — £199 standard">All-Inclusive Property Marketing — £199 standard (agency rates subject to monthly volume)</option>
             <option>Not sure — please advise</option>
           </select>
         </label>
