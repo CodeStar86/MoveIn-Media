@@ -338,12 +338,12 @@ export function Pricing() {
     <>
       <Seo
         title="Packages & Pricing"
-        description="All-inclusive property marketing for £299 per standard property, with monthly volume pricing for estate agents in North London."
+        description="All-inclusive property marketing for £199 per standard property, with monthly volume pricing for estate agents in North London."
       />
       <PageHero
         eyebrow="Packages & pricing"
         title="All-inclusive for every property."
-        text="£299 per standard residential appointment, including photography, editing, suitable digital enhancements and listing copy. Estate agents can earn better per-property rates as completed monthly volume grows."
+        text="£199 per standard residential appointment, including photography, editing, suitable digital enhancements and listing copy. Estate agents can earn better per-property rates as completed monthly volume grows."
       />
       <section className="section section--cream">
         <PricingCards />
