@@ -1,5 +1,7 @@
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
+declare const __MOVEIN_PUBLIC_SUPABASE_URL__: string
+declare const __MOVEIN_PUBLIC_SUPABASE_KEY__: string
+const url = __MOVEIN_PUBLIC_SUPABASE_URL__
+const key = __MOVEIN_PUBLIC_SUPABASE_KEY__
 const storageKey = 'movein_staff_session'
 export type Session = { access_token: string; refresh_token: string; expires_at: number }
 export const getSession = (): Session | null => {
