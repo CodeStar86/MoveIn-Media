@@ -67,7 +67,7 @@ export function Logo({ light = false }: { light?: boolean }) {
       className={`logo ${light ? "logo--light" : ""}`}
       to="/"
     >
-      <span className="logo__wordmark">MOVE<span className="logo__in">IN</span><small>MEDIA</small></span>
+      <span className="logo__mark" aria-hidden="true"><svg viewBox="0 0 46 50" fill="none"><path d="M4 46V4L23 22L42 4V46M14 46V28L23 37L32 28V46" stroke="currentColor" strokeWidth="4" strokeLinejoin="miter" strokeLinecap="square"/></svg></span><span className="logo__wordmark">MOVEIN<small>MEDIA</small></span>
     </Link>
   )
 }
