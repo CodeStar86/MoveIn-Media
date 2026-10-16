@@ -584,7 +584,8 @@ export function EstateAgents() {
           <Eyebrow>For estate agents</Eyebrow>
           <h2>Better listings. Less work for your team.</h2>
           <p>Consistent photography, digital staging and property descriptions, all managed through one service. Preferential rates for regular bookings.</p>
-          <ButtonLink to="/contact">Discuss agency bookings</ButtonLink>
+          <ButtonLink to="/agent">Agent portal — register or sign in</ButtonLink>
+          <p><a href="/contact">Questions about an agency account? Contact us</a></p>
         </div>
       </section>
       <FinalCta />
