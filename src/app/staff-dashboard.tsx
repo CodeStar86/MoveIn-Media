@@ -27,6 +27,8 @@ export function StaffDashboard() {
  const [newEmail,setNewEmail]=useState("")
  const [newPhone,setNewPhone]=useState("")
  const [notice,setNotice]=useState("")
+ const [messages,setMessages]=useState<{id:string;name:string;email:string;subject:string;message:string;status:string;reply_text:string|null;created_at:string}[]>([])
+ const [replies,setReplies]=useState<Record<string,string>>({})
  const [agents,setAgents]=useState<{user_id:string;full_name:string;agency_name:string;approval_status:string}[]>([])
  const [descriptions,setDescriptions]=useState<Record<string,string>>({})
  const [uploads,setUploads]=useState<Record<string,File|null>>({})
@@ -45,12 +47,19 @@ export function StaffDashboard() {
        p.role==="admin"?staffRequest("staff_profiles?select=*&order=full_name.asc"):Promise.resolve([p]),
      ])
      setBookings(b as Booking[]);setJobs(j as Assignment[]);setStaff(s as Profile[])
-     setBilling(await staffRequest("booking_billing?select=booking_id,amount_pence,billing_mode,payment_status,admin_confirmed_at,confirmation_emailed_at") as typeof billing);if(p.role==="admin"){setAgents(await staffRequest("agent_profiles?select=user_id,full_name,agency_name,approval_status&order=created_at.desc") as typeof agents)}
+     setBilling(await staffRequest("booking_billing?select=booking_id,amount_pence,billing_mode,payment_status,admin_confirmed_at,confirmation_emailed_at") as typeof billing);if(p.role==="admin"){setAgents(await staffRequest("agent_profiles?select=user_id,full_name,agency_name,approval_status&order=created_at.desc") as typeof agents);setMessages(await staffRequest("contact_messages?select=id,name,email,subject,message,status,reply_text,created_at&order=created_at.desc") as typeof messages)}
    }catch(e){setError((e as Error).message);setProfile(null)}
    finally{setLoaded(true)}
  }
  const isArchived=(b:Booking)=>billing.some(x=>x.booking_id===b.id&&x.payment_status==="paid")&&(b.status==="completed"||jobs.some(j=>j.booking_id===b.id&&j.status==="completed"))
  const visibleBookings=bookings.filter(b=>isArchived(b)===(bookingView==="archived"))
+ const replyToMessage=async(id:string)=>{
+  const session=getSession();if(!session)throw Error("Sign in required")
+  const response=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/functions/v1/contact-reply",{method:"POST",headers:{"Content-Type":"application/json",apikey:__MOVEIN_PUBLIC_SUPABASE_KEY__,Authorization:"Bearer "+session.access_token},body:JSON.stringify({id,reply:replies[id]||""})})
+  const data=await response.json().catch(()=>({})) as {error?:string}
+  if(!response.ok)throw Error(data.error||"Unable to send reply")
+  setReplies(current=>({...current,[id]:""}))
+ }
  const getUserId=async()=>{
    const data=await staffRequest("staff_profiles?select=user_id,role,active")
    const rows=data as Profile[]
@@ -122,6 +131,13 @@ export function StaffDashboard() {
   </div>:null}
    {profile?<div className="agent-workspace"><div className="workspace-heading"><div><div className="workspace-eyebrow">MOVEIN MEDIA OPERATIONS</div><h1>{profile.role==="admin"?"Your administration hub.":"Your photography jobs."}</h1><p>{profile.role==="admin"?"Review agent accounts, allocate shoots and oversee your team.":"Manage your assigned shoots and deliver finished property media."}</p></div><button className="workspace-signout" onClick={()=>{saveSession(null);setProfile(null);setError("");setJobs([]);setBookings([])}}>Sign out ↗</button></div><div className="workspace-stats"><div><span>Signed in as</span><strong>{profile.full_name}</strong></div><div><span>Bookings</span><strong>{bookings.length}</strong></div><div><span>{profile.role==="admin"?"To allocate":"My assignments"}</span><strong>{profile.role==="admin"?bookings.filter(b=>!jobs.some(j=>j.booking_id===b.id)).length:jobs.filter(j=>j.photographer_id===profile.user_id).length}</strong></div></div><div className="staff-workspace-grid"><div className="staff-workspace-main"><section className="workspace-card"><div className="workspace-section-kicker">SECURITY</div><h2>Account security</h2><form onSubmit={e=>{e.preventDefault();void run(()=>setStaffPassword(newPassword),"Password updated")}} style={{display:"flex",gap:10,flexWrap:"wrap"}}><input style={{...field,maxWidth:280}} type="password" autoComplete="new-password" minLength={12} required aria-label="New password" placeholder="Set or change password (12+ characters)" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><button style={action} disabled={busy}>Save password</button></form></section>
    {profile.role==="admin"?<>
+    <section className="workspace-card"><div className="workspace-section-kicker">CONTACT INBOX</div><h2>Visitor messages ({messages.filter(m=>m.status==="new").length} new)</h2>
+ {messages.length===0?<p>No contact messages yet.</p>:messages.map(m=><article key={m.id} style={{borderTop:"1px solid #dce5e1",padding:"16px 0"}}>
+  <strong>{m.subject}</strong><p>{m.name} · {m.email} · {new Date(m.created_at).toLocaleString("en-GB")}</p>
+  <p style={{whiteSpace:"pre-wrap"}}>{m.message}</p>
+  {m.status==="replied"?<p><strong>Reply sent</strong><span style={{display:"block",whiteSpace:"pre-wrap"}}>{m.reply_text}</span></p>:<div><label>Reply to visitor<textarea rows={4} style={{...field,display:"block",margin:"9px 0"}} value={replies[m.id]||""} onChange={e=>setReplies(current=>({...current,[m.id]:e.target.value}))}/></label><button type="button" style={action} disabled={busy||(replies[m.id]||"").trim().length<2} onClick={()=>void run(()=>replyToMessage(m.id),"Reply emailed to visitor")}>Send reply</button></div>}
+ </article>)}
+ </section>
     <section className="workspace-card"><div className="workspace-section-kicker">ACCESS MANAGEMENT</div><h2>Agent approvals</h2>{agents.length===0?<p>No agent registrations yet.</p>:agents.map(a=><div key={a.user_id} style={{borderTop:"1px solid #ddd",padding:"12px 0"}}><strong>{a.full_name}</strong> · {a.agency_name} · {a.approval_status} {a.approval_status==="approved"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void run(()=>createInvoice(a.user_id),"Monthly invoice sent")}>Send monthly invoice</button>} {a.approval_status!=="approved"&&<button style={{...action,marginLeft:12}} disabled={busy} onClick={()=>void approve(a.user_id,true)}>Approve</button>}{a.approval_status==="pending"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void approve(a.user_id,false)}>Reject</button>}</div>)}</section>
     <section className="workspace-card"><div className="workspace-section-kicker">AT A GLANCE</div><h2>Overview</h2><p>{bookings.length} bookings · {bookings.filter(b=>!jobs.some(j=>j.booking_id===b.id)).length} unallocated · {staff.filter(p=>p.role==="photographer"&&p.active).length} active photographers</p></section>
     <section className="workspace-card"><div className="workspace-section-kicker">TEAM MANAGEMENT</div><h2>Add photographer</h2><p>Send a secure account invitation by email. Only the administrator can create photographers.</p>
