@@ -1,3 +1,4 @@
+import "./agent-portal.css"
 declare const __MOVEIN_PUBLIC_SUPABASE_URL__:string
 declare const __MOVEIN_PUBLIC_SUPABASE_KEY__:string
 import { FormEvent, useEffect, useState } from "react"
@@ -83,20 +84,19 @@ export function StaffDashboard() {
    await staffRequest("rpc/movein_publish_deliverables",{method:"POST",body:JSON.stringify({p_booking:bookingId,p_description:descriptions[bookingId]||"",p_zip_path:path})})
    setUploads(old=>({...old,[bookingId]:null}))
  }
- return <main style={{minHeight:"100vh",background:"#f5f7f7",padding:"65px 18px",fontFamily:"system-ui,sans-serif",color:"#17302e"}}>
-  <div style={{maxWidth:1060,margin:"0 auto"}}>
-   <a href="/" style={{color:"#235b56"}}>← MoveIn Media website</a>
-   <h1 style={{fontSize:34,margin:"18px 0"}}>MoveIn Media · Staff portal</h1>
-   {!loaded?<p>Loading…</p>:null}
-   {error?<p role="alert" style={{padding:12,color:"#9c1d19",background:"#fff0ee",borderRadius:8}}>{error}</p>:null}
-   {notice?<p role="status" style={{padding:12,background:"#e9f6ef",borderRadius:8}}>{notice}</p>:null}
-   {!profile&&loaded?<form onSubmit={login} style={{...card,maxWidth:460}}>
-    <h2>Staff sign in</h2><p>For authorised MoveIn Media staff only.</p>
-    <label>Email<input style={field} type="email" required autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label>
-    <label>Password<input style={field} type="password" required autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
-    <button style={{...action,marginTop:18}} disabled={busy}>Sign in</button>
-   </form>:null}
-   {profile?<><section style={card}><h2>Account security</h2><form onSubmit={e=>{e.preventDefault();void run(()=>setStaffPassword(newPassword),"Password updated")}} style={{display:"flex",gap:10,flexWrap:"wrap"}}><input style={{...field,maxWidth:280}} type="password" autoComplete="new-password" minLength={12} required aria-label="New password" placeholder="Set or change password (12+ characters)" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><button style={action} disabled={busy}>Save password</button></form></section><div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:20}}>
+ return <main className="agent-portal"><div className="agent-shell">
+  <header className="agent-header"><a className="agent-logo" href="/">MOVEIN MEDIA</a><span className="agent-header-note">Staff &amp; administration · <a href="/agent" style={{color:"#17483e"}}>Agent portal</a></span></header>
+  {error?<p role="alert" className="agent-message error">{error}</p>:null}
+  {notice?<p role="status" className="agent-message success">{notice}</p>:null}
+  {!loaded?<p>Loading your workspace…</p>:null}
+  {!profile&&loaded?<div className="agent-auth">
+    <section className="agent-promo"><div><small>MOVEIN MEDIA · PRIVATE WORKSPACE</small><h1>Everything in its place.</h1><p>A dedicated workspace for the people behind exceptional property listings.</p></div><ul><li>Manage bookings and agent approvals</li><li>Allocate property photography jobs</li><li>Deliver finished marketing materials</li></ul></section>
+    <section className="agent-auth-card"><h2>Welcome back.</h2><p>Sign in to your secure staff portal. Access is available to authorised administrators and photographers only.</p><form className="agent-form" onSubmit={login}>
+    <label>Email address<input type="email" required autoComplete="username" placeholder="you@movein-media.co.uk" value={email} onChange={e=>setEmail(e.target.value)}/></label>
+    <label>Password<input type="password" required autoComplete="current-password" placeholder="Enter your password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
+    <button className="agent-submit" disabled={busy}>{busy?"Signing in…":"Sign in to staff portal →"}</button></form><p className="agent-auth-tip">Staff accounts are invitation only. Need access? Contact your administrator.</p></section>
+  </div>:null}
+   {profile?<div className="agent-workspace"><h1 style={{fontFamily:"Georgia,serif",fontSize:37,margin:"0 0 25px"}}>{profile.role==="admin"?"Administration dashboard":"Photographer dashboard"}</h1><section style={card}><h2>Account security</h2><form onSubmit={e=>{e.preventDefault();void run(()=>setStaffPassword(newPassword),"Password updated")}} style={{display:"flex",gap:10,flexWrap:"wrap"}}><input style={{...field,maxWidth:280}} type="password" autoComplete="new-password" minLength={12} required aria-label="New password" placeholder="Set or change password (12+ characters)" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><button style={action} disabled={busy}>Save password</button></form></section><div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:20}}>
     <div>Signed in as <strong>{profile.full_name}</strong> · {profile.role}</div>
     <button style={action} onClick={()=>{saveSession(null);setProfile(null);setError("");setJobs([]);setBookings([])}}>Sign out</button>
    </div>
@@ -137,7 +137,6 @@ export function StaffDashboard() {
      </article>
     })}
    </section>
-   </>:null}
-  </div>
- </main>
+   </div>:null}
+  </div></main>
 }
