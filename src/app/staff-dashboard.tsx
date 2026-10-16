@@ -17,6 +17,7 @@ export function StaffDashboard() {
  const [email,setEmail]=useState("")
  const [password,setPassword]=useState("")
  const [bookings,setBookings]=useState<Booking[]>([])
+ const [bookingView,setBookingView]=useState<"active"|"archived">("active")
  const [staff,setStaff]=useState<Profile[]>([])
  const [jobs,setJobs]=useState<Assignment[]>([])
  const [error,setError]=useState("")
@@ -44,10 +45,12 @@ export function StaffDashboard() {
        p.role==="admin"?staffRequest("staff_profiles?select=*&order=full_name.asc"):Promise.resolve([p]),
      ])
      setBookings(b as Booking[]);setJobs(j as Assignment[]);setStaff(s as Profile[])
-     if(p.role==="admin"){setAgents(await staffRequest("agent_profiles?select=user_id,full_name,agency_name,approval_status&order=created_at.desc") as typeof agents);setBilling(await staffRequest("booking_billing?select=booking_id,amount_pence,billing_mode,payment_status,admin_confirmed_at,confirmation_emailed_at") as typeof billing)}
+     setBilling(await staffRequest("booking_billing?select=booking_id,amount_pence,billing_mode,payment_status,admin_confirmed_at,confirmation_emailed_at") as typeof billing);if(p.role==="admin"){setAgents(await staffRequest("agent_profiles?select=user_id,full_name,agency_name,approval_status&order=created_at.desc") as typeof agents)}
    }catch(e){setError((e as Error).message);setProfile(null)}
    finally{setLoaded(true)}
  }
+ const isArchived=(b:Booking)=>billing.some(x=>x.booking_id===b.id&&x.payment_status==="paid")&&(b.status==="completed"||jobs.some(j=>j.booking_id===b.id&&j.status==="completed"))
+ const visibleBookings=bookings.filter(b=>isArchived(b)===(bookingView==="archived"))
  const getUserId=async()=>{
    const data=await staffRequest("staff_profiles?select=user_id,role,active")
    const rows=data as Profile[]
@@ -131,9 +134,9 @@ export function StaffDashboard() {
      {staff.filter(p=>p.role==="photographer").map(p=><p key={p.user_id}>{p.full_name} · {p.active?"Active":"Inactive"}</p>)}
     </section>
    </>:null}
-   <section className="workspace-card"><div className="workspace-section-kicker">SCHEDULE & DELIVERY</div><h2>{profile.role==="admin"?"Bookings and allocations":"My allocated jobs"}</h2>
-    {bookings.filter(b=>profile.role==="admin"||jobs.some(j=>j.booking_id===b.id&&j.photographer_id===profile.user_id)).length===0?<p>No bookings to display yet.</p>:null}
-    {bookings.filter(b=>profile.role==="admin"||jobs.some(j=>j.booking_id===b.id&&j.photographer_id===profile.user_id)).map(b=>{
+   <section className="workspace-card"><div className="workspace-section-kicker">SCHEDULE & DELIVERY</div><h2>{profile.role==="admin"?"Bookings and allocations":"My allocated jobs"}</h2><div style={{display:"flex",gap:10,margin:"12px 0 18px"}}><button type="button" style={{...action,opacity:bookingView==="active"?1:.55}} onClick={()=>setBookingView("active")}>Active ({bookings.filter(b=>!isArchived(b)).length})</button><button type="button" style={{...action,opacity:bookingView==="archived"?1:.55}} onClick={()=>setBookingView("archived")}>Archived ({bookings.filter(isArchived).length})</button></div>
+    {visibleBookings.filter(b=>profile.role==="admin"||jobs.some(j=>j.booking_id===b.id&&j.photographer_id===profile.user_id)).length===0?<p>No bookings to display yet.</p>:null}
+    {visibleBookings.filter(b=>profile.role==="admin"||jobs.some(j=>j.booking_id===b.id&&j.photographer_id===profile.user_id)).map(b=>{
      const j=jobs.find(x=>x.booking_id===b.id)
      return <article className="workspace-booking-item" key={b.id}>
       <div style={{display:"flex",flexWrap:"wrap",gap:12,justifyContent:"space-between"}}>
