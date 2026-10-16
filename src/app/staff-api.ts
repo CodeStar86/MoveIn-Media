@@ -9,6 +9,25 @@ export const saveSession = (session: Session | null) => {
   if (session) sessionStorage.setItem(storageKey, JSON.stringify(session))
   else sessionStorage.removeItem(storageKey)
 }
+export function recoverInviteSession() {
+  const fragment = new URLSearchParams(window.location.hash.slice(1))
+  const access_token = fragment.get('access_token')
+  const refresh_token = fragment.get('refresh_token')
+  const expires_in = Number(fragment.get('expires_in') || 3600)
+  if (access_token && refresh_token) {
+    saveSession({ access_token, refresh_token, expires_at: Date.now()+expires_in*1000 })
+    history.replaceState(null, '', window.location.pathname + window.location.search)
+  }
+}
+export async function setStaffPassword(password: string) {
+  const session = getSession()
+  if (!session || !url || !key) throw Error('Please sign in')
+  if (password.length < 12) throw Error('Use a password of at least 12 characters')
+  const response = await fetch(url+'/auth/v1/user',{method:'PUT',headers:{
+    apikey:key,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',
+  },body:JSON.stringify({password})})
+  if (!response.ok) throw Error('Could not update password')
+}
 export async function staffAuth(email: string, password: string) {
   if (!url || !key) throw Error('Staff authentication is not configured')
   const response = await fetch(url + '/auth/v1/token?grant_type=password', {
