@@ -79,7 +79,7 @@ export function StaffDashboard() {
  const savePrice=(bookingId:string)=>run(()=>staffRequest("rpc/movein_admin_price_booking",{method:"POST",body:JSON.stringify({p_booking:bookingId,p_amount_pence:Math.round(Number(prices[bookingId])*100)})}),"Booking price updated")
  const createInvoice=async(agentId:string)=>{
   const session=getSession();if(!session)throw Error("Sign in required")
-  const r=await fetch("/api/admin/monthly-invoice",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({agentId})})
+  const r=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/functions/v1/stripe-billing?action=monthly-invoice",{method:"POST",headers:{"Content-Type":"application/json",apikey:__MOVEIN_PUBLIC_SUPABASE_KEY__,Authorization:"Bearer "+session.access_token},body:JSON.stringify({agentId})})
   const data=await r.json().catch(()=>({})) as {error?:string;count?:number}
   if(!r.ok)throw Error(data.error||"Invoice failed")
  }
