@@ -55,3 +55,18 @@ Never insert custom/guessed tokens or a localhost link in templates. Supabase su
 ## Verification
 
 Send a new invite or recovery link to an existing account as appropriate. Confirm it arrives via Resend SMTP and directs to the live staff portal. Test both the booking office alert and the customer acknowledgement. Avoid creating a duplicate photographer account for an already invited user.
+
+
+## Complete copy-ready HTML files (all three)
+
+These files are source-controlled but **must be pasted and saved in the Supabase Dashboard**; pushing GitHub does not update Supabase Authentication email templates.
+
+| Supabase template | Subject | HTML file |
+|---|---|---|
+| Invite User | You're invited to join MoveIn Media | [invite.html](../supabase/email-templates/invite.html) |
+| Confirm signup | Confirm your MoveIn Media email | [confirm-signup.html](../supabase/email-templates/confirm-signup.html) |
+| Reset Password / Recovery | Reset your MoveIn Media password | [reset-password.html](../supabase/email-templates/reset-password.html) |
+
+In Supabase Authentication → Email Templates, choose each corresponding template, paste the **entire** HTML file into the body, set its subject, and click Save. Keep the GoTrue placeholder `{{ .ConfirmationURL }}` unchanged in each file.
+
+These authentication emails are sent by Supabase Auth using the configured Resend custom SMTP, not by deploying a Supabase Edge Function. Redeployment does not apply dashboard email template changes.
