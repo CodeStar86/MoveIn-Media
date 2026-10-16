@@ -1,6 +1,7 @@
 declare const __MOVEIN_PUBLIC_SUPABASE_URL__:string
 declare const __MOVEIN_PUBLIC_SUPABASE_KEY__:string
 import { FormEvent, useEffect, useState } from "react"
+import { uploadPropertyZip } from "./tus-upload"
 import { getSession, saveSession, staffAuth, staffRequest, recoverInviteSession, setStaffPassword } from "./staff-api"
 
 type Profile = {user_id:string;full_name:string;role:"admin"|"photographer";active:boolean;phone:string|null}
@@ -77,8 +78,7 @@ export function StaffDashboard() {
    if(file){if(!file.name.toLowerCase().endsWith(".zip")||file.size>200*1024*1024)throw Error("Choose a ZIP no larger than 200 MB")
      const session=getSession();if(!session)throw Error("Please sign in")
      path=bookingId+"/photos.zip"
-     const r=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/storage/v1/object/property-deliverables/"+path,{method:"POST",headers:{"Authorization":"Bearer "+session.access_token,"apikey":__MOVEIN_PUBLIC_SUPABASE_KEY__,"Content-Type":"application/zip","x-upsert":"true"},body:file})
-     if(!r.ok)throw Error("ZIP upload failed: "+r.status)
+     await uploadPropertyZip({baseUrl:__MOVEIN_PUBLIC_SUPABASE_URL__,apiKey:__MOVEIN_PUBLIC_SUPABASE_KEY__,accessToken:session.access_token,path,file,onProgress:percent=>setNotice("Uploading photo ZIP: "+percent+"%")})
    }
    await staffRequest("rpc/movein_publish_deliverables",{method:"POST",body:JSON.stringify({p_booking:bookingId,p_description:descriptions[bookingId]||"",p_zip_path:path})})
    setUploads(old=>({...old,[bookingId]:null}))
