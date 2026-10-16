@@ -96,14 +96,11 @@ export function StaffDashboard() {
     <label>Password<input type="password" required autoComplete="current-password" placeholder="Enter your password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
     <button className="agent-submit" disabled={busy}>{busy?"Signing in…":"Sign in to staff portal →"}</button></form><p className="agent-auth-tip">Staff accounts are invitation only. Need access? Contact your administrator.</p></section>
   </div>:null}
-   {profile?<div className="agent-workspace"><h1 style={{fontFamily:"Georgia,serif",fontSize:37,margin:"0 0 25px"}}>{profile.role==="admin"?"Administration dashboard":"Photographer dashboard"}</h1><section style={card}><h2>Account security</h2><form onSubmit={e=>{e.preventDefault();void run(()=>setStaffPassword(newPassword),"Password updated")}} style={{display:"flex",gap:10,flexWrap:"wrap"}}><input style={{...field,maxWidth:280}} type="password" autoComplete="new-password" minLength={12} required aria-label="New password" placeholder="Set or change password (12+ characters)" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><button style={action} disabled={busy}>Save password</button></form></section><div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:20}}>
-    <div>Signed in as <strong>{profile.full_name}</strong> · {profile.role}</div>
-    <button style={action} onClick={()=>{saveSession(null);setProfile(null);setError("");setJobs([]);setBookings([])}}>Sign out</button>
-   </div>
+   {profile?<div className="agent-workspace"><div className="workspace-heading"><div><div className="workspace-eyebrow">MOVEIN MEDIA OPERATIONS</div><h1>{profile.role==="admin"?"Your administration hub.":"Your photography jobs."}</h1><p>{profile.role==="admin"?"Review agent accounts, allocate shoots and oversee your team.":"Manage your assigned shoots and deliver finished property media."}</p></div><button className="workspace-signout" onClick={()=>{saveSession(null);setProfile(null);setError("");setJobs([]);setBookings([])}}>Sign out ↗</button></div><div className="workspace-stats"><div><span>Signed in as</span><strong>{profile.full_name}</strong></div><div><span>Bookings</span><strong>{bookings.length}</strong></div><div><span>{profile.role==="admin"?"To allocate":"My assignments"}</span><strong>{profile.role==="admin"?bookings.filter(b=>!jobs.some(j=>j.booking_id===b.id)).length:jobs.filter(j=>j.photographer_id===profile.user_id).length}</strong></div></div><div className="staff-workspace-grid"><div className="staff-workspace-main"><section className="workspace-card"><div className="workspace-section-kicker">SECURITY</div><h2>Account security</h2><form onSubmit={e=>{e.preventDefault();void run(()=>setStaffPassword(newPassword),"Password updated")}} style={{display:"flex",gap:10,flexWrap:"wrap"}}><input style={{...field,maxWidth:280}} type="password" autoComplete="new-password" minLength={12} required aria-label="New password" placeholder="Set or change password (12+ characters)" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><button style={action} disabled={busy}>Save password</button></form></section>
    {profile.role==="admin"?<>
-    <section style={card}><h2>Agent approvals</h2>{agents.length===0?<p>No agent registrations yet.</p>:agents.map(a=><div key={a.user_id} style={{borderTop:"1px solid #ddd",padding:"12px 0"}}><strong>{a.full_name}</strong> · {a.agency_name} · {a.approval_status} {a.approval_status!=="approved"&&<button style={{...action,marginLeft:12}} disabled={busy} onClick={()=>void approve(a.user_id,true)}>Approve</button>}{a.approval_status==="pending"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void approve(a.user_id,false)}>Reject</button>}</div>)}</section>
-    <section style={card}><h2>Overview</h2><p>{bookings.length} bookings · {bookings.filter(b=>!jobs.some(j=>j.booking_id===b.id)).length} unallocated · {staff.filter(p=>p.role==="photographer"&&p.active).length} active photographers</p></section>
-    <section style={card}><h2>Add photographer</h2><p>Send a secure account invitation by email. Only the administrator can create photographers.</p>
+    <section className="workspace-card"><div className="workspace-section-kicker">ACCESS MANAGEMENT</div><h2>Agent approvals</h2>{agents.length===0?<p>No agent registrations yet.</p>:agents.map(a=><div key={a.user_id} style={{borderTop:"1px solid #ddd",padding:"12px 0"}}><strong>{a.full_name}</strong> · {a.agency_name} · {a.approval_status} {a.approval_status!=="approved"&&<button style={{...action,marginLeft:12}} disabled={busy} onClick={()=>void approve(a.user_id,true)}>Approve</button>}{a.approval_status==="pending"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void approve(a.user_id,false)}>Reject</button>}</div>)}</section>
+    <section className="workspace-card"><div className="workspace-section-kicker">AT A GLANCE</div><h2>Overview</h2><p>{bookings.length} bookings · {bookings.filter(b=>!jobs.some(j=>j.booking_id===b.id)).length} unallocated · {staff.filter(p=>p.role==="photographer"&&p.active).length} active photographers</p></section>
+    <section className="workspace-card"><div className="workspace-section-kicker">TEAM MANAGEMENT</div><h2>Add photographer</h2><p>Send a secure account invitation by email. Only the administrator can create photographers.</p>
      <form onSubmit={invite} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10}}>
       <input style={field} placeholder="Full name" aria-label="Full name" value={newName} required onChange={e=>setNewName(e.target.value)}/>
       <input style={field} placeholder="Email" aria-label="Email" type="email" value={newEmail} required onChange={e=>setNewEmail(e.target.value)}/>
@@ -113,11 +110,11 @@ export function StaffDashboard() {
      {staff.filter(p=>p.role==="photographer").map(p=><p key={p.user_id}>{p.full_name} · {p.active?"Active":"Inactive"}</p>)}
     </section>
    </>:null}
-   <section style={card}><h2>{profile.role==="admin"?"Bookings and allocations":"My allocated jobs"}</h2>
+   <section className="workspace-card"><div className="workspace-section-kicker">SCHEDULE & DELIVERY</div><h2>{profile.role==="admin"?"Bookings and allocations":"My allocated jobs"}</h2>
     {bookings.filter(b=>profile.role==="admin"||jobs.some(j=>j.booking_id===b.id&&j.photographer_id===profile.user_id)).length===0?<p>No bookings to display yet.</p>:null}
     {bookings.filter(b=>profile.role==="admin"||jobs.some(j=>j.booking_id===b.id&&j.photographer_id===profile.user_id)).map(b=>{
      const j=jobs.find(x=>x.booking_id===b.id)
-     return <article key={b.id} style={{padding:"18px 0",borderTop:"1px solid #e0e5e5"}}>
+     return <article className="workspace-booking-item" key={b.id}>
       <div style={{display:"flex",flexWrap:"wrap",gap:12,justifyContent:"space-between"}}>
        <div><h3 style={{margin:"0 0 8px"}}>{b.properties?.address||"Property"} · {b.properties?.postcode}</h3>
         <p>{b.customers?.full_name} · {b.customers?.email} · {b.customers?.phone}</p>
@@ -136,7 +133,7 @@ export function StaffDashboard() {
       </div>:null}
      </article>
     })}
-   </section>
+   </section></div></div>
    </div>:null}
   </div></main>
 }
