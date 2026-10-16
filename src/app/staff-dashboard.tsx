@@ -1,3 +1,5 @@
+declare const __MOVEIN_PUBLIC_SUPABASE_URL__:string
+declare const __MOVEIN_PUBLIC_SUPABASE_KEY__:string
 import { FormEvent, useEffect, useState } from "react"
 import { getSession, saveSession, staffAuth, staffRequest, recoverInviteSession, setStaffPassword } from "./staff-api"
 
@@ -22,6 +24,9 @@ export function StaffDashboard() {
  const [newEmail,setNewEmail]=useState("")
  const [newPhone,setNewPhone]=useState("")
  const [notice,setNotice]=useState("")
+ const [agents,setAgents]=useState<{user_id:string;full_name:string;agency_name:string;approval_status:string}[]>([])
+ const [descriptions,setDescriptions]=useState<Record<string,string>>({})
+ const [uploads,setUploads]=useState<Record<string,File|null>>({})
  const [newPassword,setNewPassword]=useState("")
  const load=async()=>{
    try {
@@ -35,6 +40,7 @@ export function StaffDashboard() {
        p.role==="admin"?staffRequest("staff_profiles?select=*&order=full_name.asc"):Promise.resolve([p]),
      ])
      setBookings(b as Booking[]);setJobs(j as Assignment[]);setStaff(s as Profile[])
+     if(p.role==="admin")setAgents(await staffRequest("agent_profiles?select=user_id,full_name,agency_name,approval_status&order=created_at.desc") as typeof agents)
    }catch(e){setError((e as Error).message);setProfile(null)}
    finally{setLoaded(true)}
  }
@@ -65,6 +71,18 @@ export function StaffDashboard() {
   if(!resp.ok)throw Error(json.error||"Could not invite photographer")
   setNewName("");setNewEmail("");setNewPhone("")
  },"Photographer invitation sent")}
+ const approve=(userId:string,approved:boolean)=>run(()=>staffRequest("rpc/movein_approve_agent",{method:"POST",body:JSON.stringify({p_user_id:userId,p_approve:approved})}),approved?"Agent approved":"Agent declined")
+ const publish=async(bookingId:string)=>{
+   const file=uploads[bookingId];let path:string|null=null
+   if(file){if(!file.name.toLowerCase().endsWith(".zip")||file.size>200*1024*1024)throw Error("Choose a ZIP no larger than 200 MB")
+     const session=getSession();if(!session)throw Error("Please sign in")
+     path=bookingId+"/photos.zip"
+     const r=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/storage/v1/object/property-deliverables/"+path,{method:"POST",headers:{"Authorization":"Bearer "+session.access_token,"apikey":__MOVEIN_PUBLIC_SUPABASE_KEY__,"Content-Type":"application/zip","x-upsert":"true"},body:file})
+     if(!r.ok)throw Error("ZIP upload failed: "+r.status)
+   }
+   await staffRequest("rpc/movein_publish_deliverables",{method:"POST",body:JSON.stringify({p_booking:bookingId,p_description:descriptions[bookingId]||"",p_zip_path:path})})
+   setUploads(old=>({...old,[bookingId]:null}))
+ }
  return <main style={{minHeight:"100vh",background:"#f5f7f7",padding:"65px 18px",fontFamily:"system-ui,sans-serif",color:"#17302e"}}>
   <div style={{maxWidth:1060,margin:"0 auto"}}>
    <a href="/" style={{color:"#235b56"}}>← MoveIn Media website</a>
@@ -83,6 +101,7 @@ export function StaffDashboard() {
     <button style={action} onClick={()=>{saveSession(null);setProfile(null);setError("");setJobs([]);setBookings([])}}>Sign out</button>
    </div>
    {profile.role==="admin"?<>
+    <section style={card}><h2>Agent approvals</h2>{agents.length===0?<p>No agent registrations yet.</p>:agents.map(a=><div key={a.user_id} style={{borderTop:"1px solid #ddd",padding:"12px 0"}}><strong>{a.full_name}</strong> · {a.agency_name} · {a.approval_status} {a.approval_status!=="approved"&&<button style={{...action,marginLeft:12}} disabled={busy} onClick={()=>void approve(a.user_id,true)}>Approve</button>}{a.approval_status==="pending"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void approve(a.user_id,false)}>Reject</button>}</div>)}</section>
     <section style={card}><h2>Overview</h2><p>{bookings.length} bookings · {bookings.filter(b=>!jobs.some(j=>j.booking_id===b.id)).length} unallocated · {staff.filter(p=>p.role==="photographer"&&p.active).length} active photographers</p></section>
     <section style={card}><h2>Add photographer</h2><p>Send a secure account invitation by email. Only the administrator can create photographers.</p>
      <form onSubmit={invite} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10}}>
@@ -106,6 +125,7 @@ export function StaffDashboard() {
         {b.instructions?<p>Instructions: {b.instructions}</p>:null}
        </div><div><strong>{j?.status||"Unallocated"}</strong><div style={{fontSize:13}}>Scheduled: {date(j?.scheduled_at||null)}</div></div>
       </div>
+      {profile.role==="photographer"&&j&&<section style={{marginTop:12}}><h4>Deliver photos and property description</h4><label>Photo ZIP (maximum 200 MB)<input type="file" accept=".zip,application/zip" onChange={e=>setUploads(old=>({...old,[b.id]:e.target.files?.[0]||null}))}/></label><textarea style={{...field,marginTop:10}} rows={7} placeholder="Property description for the agent to copy" value={descriptions[b.id]||""} onChange={e=>setDescriptions(old=>({...old,[b.id]:e.target.value}))}/><button style={action} disabled={busy} onClick={()=>void run(()=>publish(b.id),"Deliverables sent to agent dashboard")}>Publish to agent</button></section>}
       {profile.role==="admin"?<label>Assign photographer
         <select style={{...field,maxWidth:350,margin:"6px 0"}} disabled={busy} value={j?.photographer_id||""} onChange={e=>void assign(b.id,e.target.value)}>
          <option value="">Select photographer</option>
