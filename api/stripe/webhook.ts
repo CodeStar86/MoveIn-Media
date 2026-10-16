@@ -18,7 +18,12 @@ export default async function handler(req:Req,res:Res){
   if(event.type==='checkout.session.completed'&&obj.payment_status==='paid'){
    const bookingId=obj.metadata?.booking_id as string|undefined
    if(bookingId&&/^[0-9a-f-]{36}$/i.test(bookingId)){
-    const update=await fetch(base+'/rest/v1/booking_billing?booking_id=eq.'+bookingId+'&stripe_checkout_id=eq.'+encodeURIComponent(obj.id),{method:'PATCH',headers:{...headers,Prefer:'return=minimal'},body:JSON.stringify({payment_status:'paid',stripe_payment_intent_id:obj.payment_intent||null,paid_at:new Date().toISOString()})})
+    let receiptUrl:string|null=null
+    if(typeof obj.payment_intent==='string'&&process.env.STRIPE_SECRET_KEY){
+     const details=await fetch('https://api.stripe.com/v1/payment_intents/'+encodeURIComponent(obj.payment_intent)+'?expand[]=latest_charge',{headers:{Authorization:'Bearer '+process.env.STRIPE_SECRET_KEY}})
+     if(details.ok){const pi=await details.json() as {latest_charge?:{receipt_url?:string}|string};if(typeof pi.latest_charge==='object')receiptUrl=pi.latest_charge?.receipt_url||null}
+    }
+    const update=await fetch(base+'/rest/v1/booking_billing?booking_id=eq.'+bookingId+'&stripe_checkout_id=eq.'+encodeURIComponent(obj.id),{method:'PATCH',headers:{...headers,Prefer:'return=minimal'},body:JSON.stringify({payment_status:'paid',stripe_payment_intent_id:obj.payment_intent||null,receipt_url:receiptUrl,paid_at:new Date().toISOString()})})
     if(!update.ok)throw Error('Booking payment update failed')
    }
   }
