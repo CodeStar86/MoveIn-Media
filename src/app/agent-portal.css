@@ -33,3 +33,19 @@
 .staff-workspace-main .workspace-card button{border-radius:9px}
 @media(max-width:860px){.workspace-columns{grid-template-columns:1fr}.workspace-stats{gap:10px}.workspace-stats>div{padding:17px}.workspace-stats strong{font-size:17px}}
 @media(max-width:540px){.workspace-heading{align-items:flex-start}.workspace-heading h1{font-size:33px}.workspace-stats{grid-template-columns:1fr}.workspace-stats>div{padding:16px 20px}.workspace-card{padding:22px 19px}.workspace-form{grid-template-columns:1fr}.workspace-form label{grid-column:1 / -1}.workspace-signout{font-size:12px;padding:10px}}
+
+
+/* Photographer job actions: separate decisions from delivery */
+.photographer-delivery{margin-top:22px;padding:19px 20px;border:1px solid #dbe8e0;border-radius:13px;background:#f7faf8}
+.photographer-delivery h4{margin:0 0 16px;font-size:16px;font-weight:700;color:#19473b}
+.photographer-delivery label{display:block;margin:0 0 14px;font-size:13px;color:#3b5b50}
+.photographer-delivery input[type=file]{display:block;width:100%;box-sizing:border-box;margin-top:9px;font-size:13px}
+.photographer-delivery textarea{box-sizing:border-box;display:block;width:100%;max-width:100%;margin:14px 0 0!important;min-height:112px;resize:vertical}
+.photographer-delivery-footer{display:flex;justify-content:flex-end;margin-top:16px}
+.photographer-primary-btn,.photographer-status-btn{display:inline-flex;align-items:center;justify-content:center;width:auto!important;min-width:0;padding:11px 17px!important;border-radius:9px!important;font-size:13px!important;line-height:1.35;font-weight:650;border:1px solid transparent;cursor:pointer;white-space:normal;text-align:center}
+.photographer-primary-btn{background:#17483e;color:white}
+.photographer-status-actions{display:flex;flex-wrap:wrap;align-items:center;gap:11px;margin-top:19px;padding-top:18px;border-top:1px solid #e5ece7}
+.photographer-status-btn{background:#17483e;color:white}
+.photographer-status-btn--decline{background:#fff;color:#7b3d38;border-color:#e2c7c3}
+.photographer-primary-btn:disabled,.photographer-status-btn:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:480px){.photographer-delivery{padding:16px}.photographer-delivery-footer{justify-content:stretch}.photographer-primary-btn{width:100%!important}.photographer-status-actions{gap:9px}.photographer-status-btn{flex:1 1 130px}}
