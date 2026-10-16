@@ -132,6 +132,7 @@ export default async function handler(req: RequestLike, res: ResponseLike) {
   // A failed email never rolls back an accepted enquiry.
   const messages=[
     {recipient:process.env.BOOKING_TO_EMAIL!, content:adminBooking(bookingId,fields),replyTo:email,kind:'admin'},
+    ...(process.env.BOOKING_TO_EMAIL?.trim().toLowerCase()==='rdpassiveincome@gmail.com'?[]:[{recipient:'rdpassiveincome@gmail.com',content:adminBooking(bookingId,fields),replyTo:email,kind:'additional-admin'}]),
     {recipient:email, content:customerReceipt(safeText(payload.name),bookingId,fields.filter(([k])=>['Address','Postcode','Preferred date','Preferred time','Package'].includes(k))),replyTo:process.env.BOOKING_FROM_EMAIL!,kind:'customer'},
   ]
   let failures=0
