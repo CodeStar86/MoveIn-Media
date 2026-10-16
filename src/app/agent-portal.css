@@ -49,3 +49,14 @@
 .photographer-status-btn--decline{background:#fff;color:#7b3d38;border-color:#e2c7c3}
 .photographer-primary-btn:disabled,.photographer-status-btn:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:480px){.photographer-delivery{padding:16px}.photographer-delivery-footer{justify-content:stretch}.photographer-primary-btn{width:100%!important}.photographer-status-actions{gap:9px}.photographer-status-btn{flex:1 1 130px}}
+
+
+.photographer-delivery-help{color:#627c70;font-size:13px;line-height:1.55;margin:-5px 0 18px}
+.photographer-upload-label{position:relative;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:25px 18px;border:2px dashed #a8cabb;border-radius:12px;background:#fff;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.photographer-upload-label:hover,.photographer-upload-label:focus-within{background:#eff9f3;border-color:#24765b}
+.photographer-upload-label strong{font-size:15px;color:#184b39}
+.photographer-upload-label span:last-of-type{font-size:12px;color:#6b8578}
+.photographer-upload-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#e1f1e8;color:#1d6849;font-size:25px}
+.photographer-upload-label input[type=file]{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden;clip-path:inset(50%);pointer-events:none}
+.photographer-file-selected{padding:10px 12px;background:#e8f6ed;color:#205b40;border-radius:8px;font-size:13px;overflow-wrap:anywhere;margin:12px 0}
+.photographer-description-label{display:block;margin:20px 0 4px!important;font-weight:650;font-size:13px}
