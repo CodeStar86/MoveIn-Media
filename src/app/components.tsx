@@ -116,7 +116,7 @@ export function Layout() {
           ))}
         </nav>
         <div className="header-actions">
-          <Link className="header-book" to="/book">
+          <Link className="header-book" to="/agent">
             Book a property <ArrowRight size={17} aria-hidden="true" />
           </Link>
         </div>
@@ -149,7 +149,7 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <ButtonLink to="/book" variant="light">
+          <ButtonLink to="/agent" variant="light">
             Book a property
           </ButtonLink>
         </div>
@@ -343,7 +343,7 @@ export function PricingCards() {
             <li key={item}><Check size={17} aria-hidden="true" /><span>{item}</span></li>
           ))}
         </ul>
-        <ButtonLink to="/book" variant="primary">Book a property</ButtonLink>
+        <ButtonLink to="/agent" variant="primary">Book a property</ButtonLink>
         <p className="pricing-offer__scope">Standard residential properties up to four bedrooms in our local service area.</p>
       </article>
       <section className="partner-rates" aria-labelledby="partner-rates-title">
@@ -393,7 +393,7 @@ export function FinalCta() {
           <em>A better-presented property.</em>
         </h2>
       </div>
-      <ButtonLink to="/book" variant="light">
+      <ButtonLink to="/agent" variant="light">
         Request your photography booking
       </ButtonLink>
     </section>
