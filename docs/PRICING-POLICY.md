@@ -1,7 +1,7 @@
-# MoveIn Media pricing policy (proposed launch rates)
+# MoveIn Media pricing policy (proposed launch rates (updated))
 
-- One all-inclusive service: **£299** per standard property appointment.
-- Estate agent monthly paid-and-completed appointment volumes: **1–2 £299**, **3–5 £279**, **6–9 £269**, **10+ £259** per appointment.
+- One all-inclusive service: **£199** per standard property appointment.
+- Estate agent monthly paid-and-completed appointment volumes: **1–2 £199**, **3–5 £189**, **6–9 £179**, **10+ £169** per appointment.
 - Rates apply retrospectively to all qualifying completed paid appointments in the same calendar month; credits/refunds and qualifying entity must be agreed in writing. No automatic price calculation/charging is implemented.
 - Standard scope: residential properties up to four bedrooms, within local North/North West London operating area, photography, edited listing images, digital decluttering of all suitable listing images without per-image limits, digital furnishing of every empty room (no per-image cap) and listing description and digital delivery.
 - Larger/commercial properties, travel beyond local area, or work outside an eligible standard residential appointment: bespoke quote before acceptance. Digital furnishing is for imagery only; no physical furniture is supplied. Digitally enhanced images must be labelled and must not misrepresent property structure or condition.
