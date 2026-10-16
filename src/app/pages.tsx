@@ -1,3 +1,4 @@
+import { useState, type FormEvent } from "react"
 import {
   Aperture,
   Camera,
@@ -711,7 +712,7 @@ export function Booking() {
           <p>Register with your name, agency, email and password. Confirm your email, then wait for approval. Once approved, you can submit booking requests from your own dashboard.</p>
           <ButtonLink to="/agent">Register or sign in to book</ButtonLink>
           <p>Already approved? Sign in to the same agent portal to manage bookings and download completed property media.</p>
-          <p>Need assistance? <a href="mailto:hello@movein-media.co.uk">hello@movein-media.co.uk</a></p>
+          <p>Need assistance? <a href="/contact">our contact form</a></p>
         </div>
       </section>
     </>
@@ -719,39 +720,39 @@ export function Booking() {
 }
 
 export function Contact() {
-  return (
-    <>
-      <Seo
-        title="Contact"
-        description="Contact MoveIn Media about property photography and all-inclusive property marketing in North London."
-      />
-      <PageHero
-        eyebrow="Contact"
-        title="Let’s present your next property beautifully."
-        text="For booking questions, agency enquiries or help choosing the right package, send us a note. We’ll reply as soon as we can."
-      />
-      <section className="section contact-grid">
-        <div>
-          <span>Email</span>
-          <a href="mailto:hello@movein-media.co.uk">hello@movein-media.co.uk</a>
-          <p>For property and agency enquiries.</p>
-        </div>
-        <div>
-          <span>Coverage</span>
-          <strong>North London</strong>
-          <p>N, NW and EN postcodes, including Barnet, Enfield and Finchley.</p>
-        </div>
-        <div>
-          <span>Ready to begin?</span>
-          <strong>Request a date online</strong>
-          <ButtonLink to="/book" variant="text">
-            Start a booking request
-          </ButtonLink>
-        </div>
-      </section>
-      <FinalCta />
-    </>
-  )
+ const [state,setState]=useState<"idle"|"sending"|"sent"|"error">("idle")
+ const [error,setError]=useState("")
+ async function send(e:FormEvent<HTMLFormElement>){
+  e.preventDefault();if(state==="sending")return
+  setState("sending");setError("")
+  const form=e.currentTarget
+  const values=Object.fromEntries(new FormData(form))
+  try {
+   const response=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/functions/v1/contact-submit",{method:"POST",headers:{"content-type":"application/json",apikey:__MOVEIN_PUBLIC_SUPABASE_KEY__},body:JSON.stringify(values)})
+   const data=await response.json().catch(()=>({})) as {error?:string}
+   if(!response.ok)throw new Error(data.error||"Unable to send your message")
+   form.reset();setState("sent")
+  }catch(err){setState("error");setError((err as Error).message)}
+ }
+ return <>
+  <Seo title="Contact" description="Send MoveIn Media an enquiry through our contact form."/>
+  <PageHero eyebrow="Get in touch" title="How can we help?" text="Send a message about bookings, photography or agency services. Our team will reply by email."/>
+  <section className="section" style={{maxWidth:850,margin:"0 auto"}}>
+   <div style={{padding:"clamp(20px,4vw,45px)",borderRadius:14,border:"1px solid var(--line)"}}>
+    <h2>Contact MoveIn Media</h2>
+    <form onSubmit={send} style={{display:"grid",gap:15,marginTop:24}}>
+      <label>Your name<input name="name" required minLength={2} maxLength={120} autoComplete="name" style={{display:"block",width:"100%",padding:13,marginTop:7}}/></label>
+      <label>Email address<input name="email" type="email" required maxLength={254} autoComplete="email" style={{display:"block",width:"100%",padding:13,marginTop:7}}/></label>
+      <label>Subject<input name="subject" required minLength={2} maxLength={180} style={{display:"block",width:"100%",padding:13,marginTop:7}}/></label>
+      <label>Message<textarea name="message" required minLength={10} maxLength={5000} rows={6} style={{display:"block",width:"100%",padding:13,marginTop:7}}/></label>
+      <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{position:"absolute",left:"-10000px",height:1,width:1}}/>
+      {state==="sent"&&<p role="status">Thank you — your message has been sent. We'll reply by email.</p>}
+      {state==="error"&&<p role="alert" style={{color:"#a52a2a"}}>{error}</p>}
+      <button type="submit" disabled={state==="sending"} style={{background:"#153f39",color:"#fff",padding:"14px 22px",border:0,borderRadius:8,fontWeight:700}}>{state==="sending"?"Sending…":"Send message"}</button>
+    </form>
+   </div>
+  </section>
+ </>
 }
 
 export function Faqs() {
