@@ -116,9 +116,20 @@ export function StaffDashboard() {
  }
  const createInvoice=async(agentId:string)=>{
   const session=getSession();if(!session)throw Error("Sign in required")
-  const r=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/functions/v1/stripe-billing?action=monthly-invoice",{method:"POST",headers:{"Content-Type":"application/json",apikey:__MOVEIN_PUBLIC_SUPABASE_KEY__,Authorization:"Bearer "+session.access_token},body:JSON.stringify({agentId})})
-  const data=await r.json().catch(()=>({})) as {error?:string;count?:number}
-  if(!r.ok)throw Error(data.error||"Invoice failed")
+  const today=new Date()
+  const month=new Date(Date.UTC(today.getUTCFullYear(),today.getUTCMonth()-1,1)).toISOString().slice(0,7)
+  const request=async(action:"monthly-preview"|"monthly-invoice",confirm=false)=>{
+    const response=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/functions/v1/stripe-billing?action="+action,{method:"POST",headers:{"Content-Type":"application/json",apikey:__MOVEIN_PUBLIC_SUPABASE_KEY__,Authorization:"Bearer "+session.access_token},body:JSON.stringify({agentId,month,confirm})})
+    const data=await response.json().catch(()=>({})) as {error?:string;count?:number;ratePence?:number;totalPence?:number;savingsPence?:number;jobs?:{address:string}[]}
+    if(!response.ok)throw Error(data.error||"Unable to prepare monthly invoice")
+    return data
+  }
+  const preview=await request("monthly-preview")
+  const money=(pence:number)=>"£"+(pence/100).toFixed(2)
+  const details=(preview.jobs||[]).map(item=>"• "+item.address).join("\n")
+  const approved=window.confirm("Review partner invoice for "+month+"\n\nCompleted qualifying properties: "+preview.count+"\nRate per property: "+money(preview.ratePence||0)+"\nTotal: "+money(preview.totalPence||0)+"\nPartner savings: "+money(preview.savingsPence||0)+"\n\n"+details+"\n\nSend this invoice to the estate agent? This will create and send a Stripe invoice.")
+  if(!approved)return
+  await request("monthly-invoice",true)
  }
  const publish=async(bookingId:string)=>{
    const file=uploads[bookingId];let path:string|null=null
@@ -161,7 +172,7 @@ export function StaffDashboard() {
         </article>)}
       </div>}
     </section>
-    <section className="workspace-card"><div className="workspace-section-kicker">ACCESS MANAGEMENT</div><h2>Agent approvals</h2>{agents.length===0?<p>No agent registrations yet.</p>:agents.map(a=><div key={a.user_id} style={{borderTop:"1px solid #ddd",padding:"12px 0"}}><strong>{a.full_name}</strong> · {a.agency_name} · {a.approval_status} {a.approval_status==="approved"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void run(()=>createInvoice(a.user_id),"Monthly invoice sent")}>Send monthly invoice</button>} {a.approval_status!=="approved"&&<button style={{...action,marginLeft:12}} disabled={busy} onClick={()=>void approve(a.user_id,true)}>Approve</button>}{a.approval_status==="pending"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void approve(a.user_id,false)}>Reject</button>}</div>)}</section>
+    <section className="workspace-card"><div className="workspace-section-kicker">ACCESS MANAGEMENT</div><h2>Agent approvals</h2>{agents.length===0?<p>No agent registrations yet.</p>:agents.map(a=><div key={a.user_id} style={{borderTop:"1px solid #ddd",padding:"12px 0"}}><strong>{a.full_name}</strong> · {a.agency_name} · {a.approval_status} {a.approval_status==="approved"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void run(()=>createInvoice(a.user_id),"Monthly invoice sent")}>Review & send last month’s invoice</button>} {a.approval_status!=="approved"&&<button style={{...action,marginLeft:12}} disabled={busy} onClick={()=>void approve(a.user_id,true)}>Approve</button>}{a.approval_status==="pending"&&<button style={{...action,marginLeft:8}} disabled={busy} onClick={()=>void approve(a.user_id,false)}>Reject</button>}</div>)}</section>
     <section className="workspace-card"><div className="workspace-section-kicker">AT A GLANCE</div><h2>Overview</h2><p>{bookings.length} bookings · {bookings.filter(b=>!jobs.some(j=>j.booking_id===b.id)).length} unallocated · {staff.filter(p=>p.role==="photographer"&&p.active).length} active photographers</p></section>
     <section className="workspace-card"><div className="workspace-section-kicker">TEAM MANAGEMENT</div><h2>Add photographer</h2><p>Send a secure account invitation by email. Only the administrator can create photographers.</p>
      <form onSubmit={invite} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10}}>

@@ -76,7 +76,7 @@ export const faqs = [
   ],
   [
     "Do you work with estate agents on multiple properties?",
-    "Yes. Estate agents qualify for reduced per-property rates based on completed and paid appointments per calendar month: 3–5 at £279, 6–9 at £269, or 10+ at £259. We agree how monthly credits or refunds are applied before work begins.",
+    "Yes. Estate agents qualify for reduced per-property rates based on completed and paid appointments per calendar month: 3–5 at £189, 6–9 at £179, or 10+ at £169. Approved partner agencies can receive a single monthly invoice at the qualifying rate, subject to completed eligible jobs and administrator review.",
   ],
   [
     "Will virtually staged images be labelled?",
