@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#102e2a"/><stop offset="1" stop-color="#2f6153"/></linearGradient></defs>
+<rect width="1200" height="630" fill="url(#g)"/>
+<rect x="75" y="72" width="1050" height="486" rx="18" fill="none" stroke="#c9d5bb" stroke-opacity=".4" stroke-width="2"/>
+<path d="M108 217V115l48 52 48-52v102m-71 0v-51l23 24 23-24v51" fill="none" stroke="#d4e0c9" stroke-width="8"/>
+<text x="242" y="171" fill="#ecf2e8" font-family="Arial,sans-serif" font-size="58" letter-spacing="5" font-weight="700">MOVEIN MEDIA</text>
+<path d="M108 265H1092" stroke="#b4cbb5" stroke-opacity=".45"/>
+<text x="108" y="348" fill="#ffffff" font-family="Arial,sans-serif" font-size="56" font-weight="700">Property marketing,</text>
+<text x="108" y="419" fill="#dce9d4" font-family="Arial,sans-serif" font-size="56">beautifully handled.</text>
+<text x="108" y="485" fill="#d1dfd1" font-family="Arial,sans-serif" font-size="27">Photography · Digital decluttering · Virtual staging</text>
+<text x="108" y="542" fill="#bdd1bf" font-family="Arial,sans-serif" font-size="24">North London  |  movein-media.co.uk</text>
+</svg>

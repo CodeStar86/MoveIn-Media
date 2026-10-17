@@ -3,7 +3,7 @@ import { adminBooking, customerReceipt } from './email-templates.ts'
 type RequestLike = { method?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
 type ResponseLike = { status: (code: number) => ResponseLike; json: (body: unknown) => void; setHeader: (name: string, value: string) => void }
 const required = ['name','email','phone','address','postcode','propertyType','size','purpose','date','time','package'] as const
-const maxLength: Record<string, number> = { name: 120, email: 254, phone: 40, address: 300, postcode: 12, agency: 150, propertyType: 40, size: 120, purpose: 50, date: 10, time: 20, package: 120, instructions: 3000, website: 100, turnstileToken: 2048 }
+const maxLength: Record<string, number> = { name: 120, email: 254, phone: 40, address: 300, postcode: 12, agency: 150, propertyType: 40, size: 120, purpose: 50, date: 10, time: 20, package: 120, instructions: 3000, website: 100, turnstileToken: 2048, source: 80 }
 const choices: Record<string, string[]> = {
   propertyType: ['Flat','House','Maisonette','Commercial / other'],
   purpose: ['New listing','Refresh existing listing','Rental or Airbnb'],
@@ -70,6 +70,7 @@ async function recordBooking(payload: Record<string,unknown>, email: string, dat
     customer_id: customer!.id,property_id: property!.id,purpose: safeText(payload.purpose),
     preferred_date: date,preferred_time:safeText(payload.time),package_selection:safeText(payload.package),
     instructions:safeText(payload.instructions) || null,
+    source:safeText(payload.source) || "website",
   })
   await db('booking_events','POST',{booking_id:booking!.id,event_type:'created'})
   return String(booking!.id)

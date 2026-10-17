@@ -88,6 +88,15 @@ const extraMobileNav = [
 ]
 
 export function Layout() {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const source = (params.get("utm_source") || "").slice(0,80)
+    if (source) sessionStorage.setItem("movein_campaign_source",source)
+    if (!source || navigator.doNotTrack === "1") return
+    const body = JSON.stringify({event_type:"landing",source,medium:(params.get("utm_medium")||"").slice(0,80),campaign:(params.get("utm_campaign")||"").slice(0,120),path:window.location.pathname})
+    fetch("/api/marketing",{method:"POST",headers:{"Content-Type":"application/json"},body,keepalive:true}).catch(()=>{})
+  }, [])
+
   const [open, setOpen] = useState(false)
   const location = useLocation()
   useEffect(() => {
@@ -436,7 +445,7 @@ export function BookingForm() {
       const response = await fetch("/api/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({...body, source: (sessionStorage.getItem("movein_campaign_source") || new URLSearchParams(window.location.search).get("utm_source") || "website").slice(0,80)}),
       })
       if (!response.ok) {
         const data = await response.json().catch(() => ({})) as {error?: string}
