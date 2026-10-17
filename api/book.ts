@@ -1,3 +1,4 @@
+import { allowRequest } from "./rate-limit.ts"
 import { adminBooking, customerReceipt } from './email-templates.ts'
 /** Booking enquiry endpoint. Requires Supabase, Cloudflare Turnstile and Resend configuration in production. */
 type RequestLike = { method?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
@@ -113,6 +114,8 @@ export default async function handler(req: RequestLike, res: ResponseLike) {
   const allowedOrigin=process.env.BOOKING_ALLOWED_ORIGIN ?? 'https://www.movein-media.co.uk'
   if (origin && origin !== allowedOrigin && !(process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin))) return res.status(403).json({error:'Forbidden origin'})
   const ip=header(req,'x-vercel-forwarded-for')?.split(',')[0]?.trim() || header(req,'x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  try {if(!await allowRequest(req.headers,"booking",3,3600)){res.setHeader("Retry-After","3600");return res.status(429).json({error:"Too many requests. Please try again later."})}}
+  catch{return res.status(503).json({error:"Booking protection temporarily unavailable"})}
   try { if (!await verifyTurnstile(safeText(payload.turnstileToken),ip)) return res.status(403).json({error:'Security verification failed. Please try again.'}) }
   catch (err) { console.error('Turnstile unavailable',err instanceof Error ? err.message : 'unknown'); return res.status(503).json({error:'Security verification unavailable. Please try again.'}) }
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return res.status(503).json({error:'Booking database not configured'})

@@ -14,17 +14,8 @@ export default async function handler(req:Req,res:Res){
  const headers={apikey:key,Authorization:"Bearer "+key}
  const profile=await fetch(url+"/rest/v1/staff_profiles?user_id=eq."+encodeURIComponent(user.id)+"&active=eq.true&role=eq.admin&select=user_id&limit=1",{headers})
  if(!profile.ok||(await profile.json() as unknown[]).length===0)return res.status(403).json({error:"Admins only"})
- const since=new Date(Date.now()-30*86400000).toISOString()
- const [events,bookings]=await Promise.all([
- fetch(url+"/rest/v1/marketing_events?select=event_type,source,created_at&created_at=gte."+encodeURIComponent(since)+"&limit=10000",{headers}),
- fetch(url+"/rest/v1/booking_requests?select=source,submitted_at&submitted_at=gte."+encodeURIComponent(since)+"&limit=10000",{headers})
- ])
- if(!events.ok||!bookings.ok)return res.status(503).json({error:"Analytics query failed"})
- const ev=await events.json() as {event_type:string;source:string}[]
- const bk=await bookings.json() as {source:string}[]
- const totals:Record<string,{source:string;landings:number;shares:number;bookings:number}>={}
- const get=(source:string)=>totals[source]??={source,landings:0,shares:0,bookings:0}
- for(const e of ev){const row=get(e.source);if(e.event_type==="landing")row.landings++;else if(e.event_type==="share_click")row.shares++}
- for(const b of bk)get(b.source||"website").bookings++
- return res.status(200).json({periodDays:30,sources:Object.values(totals).sort((a,b)=>b.landings-a.landings),limits:"Campaign-tagged landings only; untagged visitors not counted. Events capped at 10,000 per request."})
+ const report=await fetch(url+"/rest/v1/rpc/movein_marketing_summary",{method:"POST",headers:{...headers,"Content-Type":"application/json"},body:"{}"})
+ if(!report.ok)return res.status(503).json({error:"Analytics query failed"})
+ const sources=await report.json()
+ return res.status(200).json({periodDays:30,sources,limits:"Summarised in PostgreSQL; no raw event records transferred."})
 }
