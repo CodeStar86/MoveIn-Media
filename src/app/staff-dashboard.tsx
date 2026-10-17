@@ -60,7 +60,7 @@ export function StaffDashboard() {
     await staffRequest("staff_profiles?select=user_id&limit=1")
     const token=getSession()?.access_token
     if(!token)throw Error("Please sign in again")
-    const response=await fetch("/api/admin/delete-message",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({id})})
+    const response=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/functions/v1/contact-delete",{method:"POST",headers:{"Content-Type":"application/json",apikey:__MOVEIN_PUBLIC_SUPABASE_KEY__,Authorization:"Bearer "+token},body:JSON.stringify({id})})
     const result=await response.json().catch(()=>({})) as {error?:string}
     if(!response.ok)throw Error(result.error||"Unable to delete message")
     setMessages(current=>current.filter(m=>m.id!==id))
