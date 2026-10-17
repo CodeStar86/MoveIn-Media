@@ -19,13 +19,13 @@ export function MarketingDashboard() {
   useEffect(()=>{
     let active=true
     setLoading(true);setError("")
+    if(!getSession()){sessionStorage.removeItem(cacheKey);setError("Please sign in through your staff dashboard first.");setLoading(false);return}
     if(refresh===0) {
       try {
         const cached=JSON.parse(sessionStorage.getItem(cacheKey)||"null") as {at:number;sources:SourceRow[]}|null
         if(cached&&Date.now()-cached.at<cacheTtl){setRows(cached.sources);setLoading(false);return}
       }catch{/* Missing or invalid session cache; fetch normally. */}
     }
-    if(!getSession()){setError("Please sign in through your staff dashboard first.");setLoading(false);return}
     staffRequest("staff_profiles?select=user_id&limit=1").then(async()=>{
       const token=getSession()?.access_token
       if(!token)throw Error("Please sign in again.")
