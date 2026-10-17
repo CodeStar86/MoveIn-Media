@@ -74,3 +74,45 @@
 .workspace-description p{font-size:14px;white-space:pre-wrap;color:#35584a;line-height:1.65}
 
 .workspace-download-link{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;background:#e4f3e9;color:#174b36!important;text-decoration:none!important;border:1px solid #b4d7c3;border-radius:9px;font-size:13px;font-weight:750}.workspace-download-link:hover{background:#d4eadc}
+
+/* Admin contact inbox */
+.contact-inbox{padding:28px!important}
+.contact-inbox__heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.contact-inbox__heading h2{margin:8px 0 7px}
+.contact-inbox__subtitle{margin:0;color:#72827b;font-size:14px}
+.contact-inbox__counts{display:flex;gap:9px;flex-wrap:wrap}
+.contact-inbox__count{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;background:#e5f3eb;color:#176047;font-size:13px;font-weight:650}
+.contact-inbox__count strong{font-size:17px}
+.contact-inbox__count--muted{background:#f1f4f2;color:#5c6d65}
+.contact-inbox__list{display:grid;gap:16px}
+.contact-message{border:1px solid #dce7df;border-radius:16px;background:#fff;overflow:hidden;box-shadow:0 5px 18px rgba(26,67,51,.045)}
+.contact-message__top{display:flex;align-items:flex-start;gap:14px;padding:20px 22px}
+.contact-message__avatar{display:grid;place-items:center;flex:0 0 43px;width:43px;height:43px;border-radius:13px;background:#e0eee5;color:#235b45;font-weight:750;font-size:19px}
+.contact-message__identity{flex:1;min-width:0}
+.contact-message__identity h3{margin:0 0 7px!important;color:#153e32;font-size:19px;line-height:1.3}
+.contact-message__sender{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#63746b;font-size:13px}
+.contact-message__sender strong{color:#304e42}
+.contact-message__sender a{color:#32765b;text-decoration:none;overflow-wrap:anywhere}
+.contact-message__sender a:hover{text-decoration:underline}
+.contact-message__meta{display:grid;justify-items:end;gap:8px;flex:0 0 auto;color:#829188;font-size:12px}
+.contact-message__status{border-radius:100px;padding:5px 10px;font-size:11px;font-weight:750;letter-spacing:.02em}
+.contact-message__status--new{background:#fef1dd;color:#99601b}
+.contact-message__status--sent{background:#e5f5eb;color:#226946}
+.contact-message__body{margin:0 22px 18px;border:1px solid #e8eeea;border-radius:11px;padding:17px 19px;background:#f8faf8}
+.contact-message__label{display:block;color:#648a76;font-size:10px;font-weight:800;letter-spacing:.12em;margin-bottom:11px}
+.contact-message__body p,.contact-message__reply p{margin:0!important;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;color:#3c5147;font-size:14px}
+.contact-message__reply{padding:0 22px 22px}
+.contact-message__reply textarea{box-sizing:border-box;display:block;width:100%;max-width:100%;min-height:95px;border:1px solid #d6e2da;border-radius:10px;background:#fff;padding:13px 14px;color:#183c30;font:inherit;font-size:14px;line-height:1.5;resize:vertical}
+.contact-message__reply textarea:focus{outline:2px solid #91bba5;outline-offset:2px}
+.contact-message__actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
+.contact-message__actions span{color:#819087;font-size:12px;overflow-wrap:anywhere}
+.contact-message__actions button{border:0;border-radius:9px;padding:11px 19px;background:#174b3b;color:white;font-size:13px;font-weight:700;cursor:pointer}
+.contact-message__actions button span{color:inherit;font-size:16px;margin-left:7px}
+.contact-message__actions button:hover:not(:disabled){background:#0e3528}
+.contact-message__actions button:disabled{opacity:.5;cursor:not-allowed}
+.contact-message__reply--sent{margin:0 22px 22px;padding:16px 19px;background:#eff7f1;border-left:3px solid #56a478;border-radius:8px}
+.contact-inbox__empty{padding:45px 15px;text-align:center;border:1px dashed #d5e4d9;border-radius:14px;color:#627a6d}
+.contact-inbox__empty span{display:block;font-size:32px;color:#4a8465}
+.contact-inbox__empty h3{margin:10px 0 4px;color:#174b3b}
+.contact-inbox__empty p{margin:0}
+@media(max-width:600px){.contact-inbox{padding:18px!important}.contact-message__top{padding:16px;flex-wrap:wrap}.contact-message__meta{width:100%;display:flex;justify-content:space-between;align-items:center}.contact-message__body{margin:0 16px 16px}.contact-message__reply{padding:0 16px 16px}.contact-message__reply--sent{margin:0 16px 16px;padding:14px}.contact-message__actions button{width:100%}}
