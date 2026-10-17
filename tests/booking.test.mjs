@@ -25,6 +25,7 @@ test('stores booking before sending email and records success',async()=>{
   globalThis.fetch = async (url,opts)=>{
     calls.push(url)
     if (url.includes('siteverify')) return new Response(JSON.stringify({success:true,hostname:'www.movein-media.co.uk'}),{status:200})
+    if (url.includes('/rest/v1/rpc/movein_allow_request')) return new Response('true',{status:200})
     if (url.includes('/rest/v1/')) return new Response(JSON.stringify([{id:`mock-${++idx}`}]),{status:201})
     if (url.includes('api.resend.com')) return new Response(JSON.stringify({id:'email-123'}),{status:200})
     throw Error('Unrecognized URL')
@@ -38,6 +39,7 @@ test('a failed email never loses an already-saved booking',async()=>{
   let idx=0
   globalThis.fetch = async(url)=>{
     if (url.includes('siteverify')) return new Response(JSON.stringify({success:true,hostname:'www.movein-media.co.uk'}),{status:200})
+    if (url.includes('/rest/v1/rpc/movein_allow_request')) return new Response('true',{status:200})
     if (url.includes('/rest/v1/')) return new Response(JSON.stringify([{id:`mock-${++idx}`}]),{status:201})
     if (url.includes('api.resend.com')) return new Response('',{status:500})
     throw Error('Unrecognized URL')
@@ -48,7 +50,7 @@ test('a failed email never loses an already-saved booking',async()=>{
 
 test('rejects missing and rejected Turnstile tokens before persistence',async()=>{
   let dbCalls=0
-  globalThis.fetch=async(url)=>{if(url.includes('/rest/v1/')) dbCalls++;return new Response(JSON.stringify({success:false}),{status:200})}
+  globalThis.fetch=async(url)=>{if(url.includes('/rest/v1/rpc/movein_allow_request'))return new Response('true',{status:200});if(url.includes('/rest/v1/')) dbCalls++;return new Response(JSON.stringify({success:false}),{status:200})}
   assert.equal((await call({...payload,turnstileToken:''})).code,403)
   assert.equal((await call(payload)).code,403)
   assert.equal(dbCalls,0)
