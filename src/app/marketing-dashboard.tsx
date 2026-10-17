@@ -14,9 +14,17 @@ export function MarketingDashboard() {
   const [campaign,setCampaign] = useState("autumn")
   const [copied,setCopied] = useState(false)
   const [refresh,setRefresh] = useState(0)
+  const cacheKey="movein_marketing_summary_v1"
+  const cacheTtl=10*60*1000
   useEffect(()=>{
     let active=true
     setLoading(true);setError("")
+    if(refresh===0) {
+      try {
+        const cached=JSON.parse(sessionStorage.getItem(cacheKey)||"null") as {at:number;sources:SourceRow[]}|null
+        if(cached&&Date.now()-cached.at<cacheTtl){setRows(cached.sources);setLoading(false);return}
+      }catch{/* Missing or invalid session cache; fetch normally. */}
+    }
     if(!getSession()){setError("Please sign in through your staff dashboard first.");setLoading(false);return}
     staffRequest("staff_profiles?select=user_id&limit=1").then(async()=>{
       const token=getSession()?.access_token
@@ -24,7 +32,7 @@ export function MarketingDashboard() {
       const response=await fetch("/api/admin/marketing",{headers:{Authorization:"Bearer "+token},cache:"no-store"})
       const data=await response.json()
       if(!response.ok)throw Error(data.error||"Unable to load analytics")
-      if(active)setRows(data.sources||[])
+      if(active){setRows(data.sources||[]);sessionStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),sources:data.sources||[]}))}
     }).catch(e=>{if(active)setError(e instanceof Error?e.message:"Unable to load analytics")})
       .finally(()=>{if(active)setLoading(false)})
     return ()=>{active=false}

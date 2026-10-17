@@ -93,6 +93,10 @@ export function Layout() {
     const source = (params.get("utm_source") || "").slice(0,80)
     if (source) sessionStorage.setItem("movein_campaign_source",source)
     if (!source || navigator.doNotTrack === "1") return
+    // One event per campaign per tab session; prevent reloads and React StrictMode doubling costs.
+    const eventKey = "movein_landing_" + [source,params.get("utm_medium")||"",params.get("utm_campaign")||"",window.location.pathname].join("|")
+    if (sessionStorage.getItem(eventKey)) return
+    sessionStorage.setItem(eventKey,"1")
     const body = JSON.stringify({event_type:"landing",source,medium:(params.get("utm_medium")||"").slice(0,80),campaign:(params.get("utm_campaign")||"").slice(0,120),path:window.location.pathname})
     fetch("/api/marketing",{method:"POST",headers:{"Content-Type":"application/json"},body,keepalive:true}).catch(()=>{})
   }, [])
