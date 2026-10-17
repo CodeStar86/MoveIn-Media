@@ -116,3 +116,5 @@
 .contact-inbox__empty h3{margin:10px 0 4px;color:#174b3b}
 .contact-inbox__empty p{margin:0}
 @media(max-width:600px){.contact-inbox{padding:18px!important}.contact-message__top{padding:16px;flex-wrap:wrap}.contact-message__meta{width:100%;display:flex;justify-content:space-between;align-items:center}.contact-message__body{margin:0 16px 16px}.contact-message__reply{padding:0 16px 16px}.contact-message__reply--sent{margin:0 16px 16px;padding:14px}.contact-message__actions button{width:100%}}
+
+.contact-message__delete{border:1px solid #ebd3d0;border-radius:8px;background:#fff9f8;color:#a33f36;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}.contact-message__delete:hover:not(:disabled){background:#fae9e6;border-color:#d9a8a0}.contact-message__delete:disabled{opacity:.5;cursor:not-allowed}

@@ -53,6 +53,19 @@ export function StaffDashboard() {
  }
  const isArchived=(b:Booking)=>billing.some(x=>x.booking_id===b.id&&x.payment_status==="paid")&&(b.status==="completed"||jobs.some(j=>j.booking_id===b.id&&j.status==="completed"))
  const visibleBookings=bookings.filter(b=>isArchived(b)===(bookingView==="archived"))
+ const deleteMessage=async(id:string)=>{
+  const message=messages.find(m=>m.id===id)
+  if(!message||!window.confirm(`Permanently delete the message "${message.subject}" from ${message.name}? This cannot be undone.`))return
+  await run(async()=>{
+    await staffRequest("staff_profiles?select=user_id&limit=1")
+    const token=getSession()?.access_token
+    if(!token)throw Error("Please sign in again")
+    const response=await fetch("/api/admin/delete-message",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({id})})
+    const result=await response.json().catch(()=>({})) as {error?:string}
+    if(!response.ok)throw Error(result.error||"Unable to delete message")
+    setMessages(current=>current.filter(m=>m.id!==id))
+  },"Message permanently deleted")
+ }
  const replyToMessage=async(id:string)=>{
   const session=getSession();if(!session)throw Error("Sign in required")
   const response=await fetch(__MOVEIN_PUBLIC_SUPABASE_URL__+"/functions/v1/contact-reply",{method:"POST",headers:{"Content-Type":"application/json",apikey:__MOVEIN_PUBLIC_SUPABASE_KEY__,Authorization:"Bearer "+session.access_token},body:JSON.stringify({id,reply:replies[id]||""})})
@@ -141,7 +154,7 @@ export function StaffDashboard() {
           <div className="contact-message__top">
             <div className="contact-message__avatar" aria-hidden="true">{m.name.trim().slice(0,1).toUpperCase()||"?"}</div>
             <div className="contact-message__identity"><h3>{m.subject}</h3><div className="contact-message__sender"><strong>{m.name}</strong><span aria-hidden="true">·</span><a href={`mailto:${m.email}`}>{m.email}</a></div></div>
-            <div className="contact-message__meta"><span className={m.status==="replied"?"contact-message__status contact-message__status--sent":"contact-message__status contact-message__status--new"}>{m.status==="replied"?"✓ Replied":"● New"}</span><time dateTime={m.created_at}>{new Date(m.created_at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</time></div>
+            <div className="contact-message__meta"><button type="button" className="contact-message__delete" disabled={busy} aria-label={`Delete message from ${m.name}`} onClick={()=>void deleteMessage(m.id)}>Delete</button><span className={m.status==="replied"?"contact-message__status contact-message__status--sent":"contact-message__status contact-message__status--new"}>{m.status==="replied"?"✓ Replied":"● New"}</span><time dateTime={m.created_at}>{new Date(m.created_at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</time></div>
           </div>
           <div className="contact-message__body"><div className="contact-message__label">MESSAGE</div><p>{m.message}</p></div>
           {m.status==="replied"?<div className="contact-message__reply contact-message__reply--sent"><div className="contact-message__label">YOUR REPLY · SENT</div><p>{m.reply_text||"Reply sent successfully."}</p></div>:<div className="contact-message__reply"><label htmlFor={`contact-reply-${m.id}`} className="contact-message__label">WRITE A REPLY</label><textarea id={`contact-reply-${m.id}`} rows={3} placeholder="Write your response to the visitor…" value={replies[m.id]||""} onChange={e=>setReplies(current=>({...current,[m.id]:e.target.value}))}/><div className="contact-message__actions"><span>Sent to {m.email}</span><button type="button" disabled={busy||(replies[m.id]||"").trim().length<2} onClick={()=>void run(()=>replyToMessage(m.id),"Reply emailed to visitor")}>Send reply <span aria-hidden="true">→</span></button></div></div>}
