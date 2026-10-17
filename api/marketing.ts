@@ -1,4 +1,4 @@
-import { allowRequest } from "./rate-limit.ts"
+import { allowRequest } from "../lib/rate-limit.ts"
 type Req={method?:string;headers:Record<string,string|string[]|undefined>;body?:unknown}
 type Res={status:(n:number)=>Res;json:(b:unknown)=>void;setHeader:(k:string,v:string)=>void}
 const string=(v:unknown,n:number)=>typeof v==="string"?v.trim().slice(0,n):""

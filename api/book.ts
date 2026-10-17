@@ -1,4 +1,4 @@
-import { allowRequest } from "./rate-limit.ts"
+import { allowRequest } from "../lib/rate-limit.ts"
 import { adminBooking, customerReceipt } from './email-templates.ts'
 /** Booking enquiry endpoint. Requires Supabase, Cloudflare Turnstile and Resend configuration in production. */
 type RequestLike = { method?: string; headers: Record<string, string | string[] | undefined>; body?: unknown }
